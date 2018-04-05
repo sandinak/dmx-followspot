@@ -74,11 +74,12 @@ class Stage:
         lx=joy.leftX()
         ly=joy.leftY()
         rx=joy.rightX()
-        w
-        self.fa.x += (joy.leftX()  * self.speed)
-        self.fa.y += (joy.leftY()  * self.speed)
-        self.fb.x += (joy.rightX() * self.speed)
-        self.fb.y += (joy.rightY() * self.speed)
+        ry=joy.rightY()
+        
+        self.fa.x += copysign(lx ** self.speed, lx)
+        self.fa.y += copysign(ly ** self.speed, ly) 
+        self.fb.x += copysign(rx ** self.speed, rx)
+        self.fb.y += copysign(ry ** self.speed, ry)
 
         for fixture in self.fixtures:
             dmx=self.fixtures[fixture].set_position(dmx)
