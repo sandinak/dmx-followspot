@@ -20,14 +20,20 @@ import copy
 import logging as log
 import time
 import math
-from show import Fixture
+import numpy
+from show import *
+
+def clamp(n, minn, maxn):
+    return max(min(maxn, n), minn)
+
 
 class Stage:
     def __init__(self, stage, show, stored):
         self.stage = stage
         self.show = show
-        self.speed = 150
+        self.speed = 100
         self.fixtures=dict()
+        self.all_lights = False
         
         # create objects to work with
         for fname in self.show.fixtures:
@@ -35,53 +41,114 @@ class Stage:
                 fname, 
                 self.show.fixtures[fname], 
                 )
+        self.fp = FixturePair(self.fixtures)
 
-        # TODO: create a test for missing values and make that list
-        # get a list of fixture_names to order management 
-        self.fixture_names = sorted(self.fixtures.iterkeys())
-        log.debug(self.fixture_names)
+       
+    def edit(self, joy, dmx):
 
-        # set initial fixture pair for editing
-        # we set this high cause we access the id using mod(len)
-        self.fp_id = (len(self.fixture_names) * 100 ) + 1
-        self.set_fp()
-
-
-    def set_fp(self):
-        # -1 because DMX ids are indexed at 1 .. and arrays at 0
-        id_a = ((self.fp_id     ) % len(self.fixture_names)) - 1
-        id_b = ((self.fp_id + 1 ) % len(self.fixture_names)) - 1
-        self.fa = self.fixtures[self.fixture_names[id_a]]
-        self.fb = self.fixtures[self.fixture_names[id_b]]
-
-    def edit(self,joy, dmx):
         # rotate thru working pairs
         if joy.leftBumper():
-            log.debug(' dec fp: %d' % self.fp_id)
-            self.fp_id -= 1
+            log.debug('dec fp')
+            self.fp.b.off()
+            self.fp.prev()
             time.sleep(0.2)
-            self.fb.off(dmx)
+
         elif joy.rightBumper():
-            log.debug(' inc fp: %d' % self.fp_id)
-            self.fp_id += 1
+            log.debug('inc fp')
+            self.fp.a.off()
+            self.fp.next()
+            self.fp.set_pair()
             time.sleep(0.2)
-            self.fa.off(dmx)
-        self.set_fp()
-        dmx=self.fa.on(dmx)
-        dmx=self.fb.on(dmx)
-        
+
+        if joy.dpadRight():
+            self.fp.a.update_focus(+8)
+        elif joy.dpadLeft():
+            self.fp.a.update_focus(-8)
+
+        if joy.dpadUp():
+            self.speed = clamp(self.speed+50, 25, 500)
+            log.debug(' inc speed: %d' % self.speed)
+
+        elif joy.dpadDown():
+            self.speed = clamp(self.speed-50, 25, 500)
+            log.debug(' dec speed: %d' % self.speed)
+
         # handle movement
-        lx=joy.leftX()
-        ly=joy.leftY()
-        rx=joy.rightX()
-        ry=joy.rightY()
+        lx = joy.leftX()
+        ly = joy.leftY()
+        rx = joy.rightX()
+        ry = joy.rightY()
+        if lx or ly:
+            self.fp.a.update_coordinates(
+                (self.speed * lx), 
+                (self.speed * ly))
+
+        if rx or ry: 
+            self.fp.b.update_coordinates(
+                (self.speed * rx), 
+                (self.speed * ry))
         
-        self.fa.x += copysign(lx ** self.speed, lx)
-        self.fa.y += copysign(ly ** self.speed, ly) 
-        self.fb.x += copysign(rx ** self.speed, rx)
-        self.fb.y += copysign(ry ** self.speed, ry)
+        # handle light 
+        turn_lights = ''
+        if self.all_lights ==  False and joy.rightTrigger():
+            self.all_lights = True
+            turn_lights = 'on'
+            log.debug('all_on')
+            time.sleep(0.2)
 
+        elif self.all_lights == True and joy.rightTrigger():
+            self.all_lights = False
+            turn_lights = 'off'
+            log.debug('all_off')
+            time.sleep(0.2)
+
+        # walk the fixtures and handle any all config
         for fixture in self.fixtures:
-            dmx=self.fixtures[fixture].set_position(dmx)
+            # handle triggered lights
+            if turn_lights == 'on':
+                self.fixtures[fixture].on()
+                self.turn_lights = ''
+            elif turn_lights == 'off':
+                self.fixtures[fixture].off()
 
+            dmx = self.fixtures[fixture].update_dmx(dmx)
         return dmx
+
+    
+class FixturePair(Stage):
+    def __init__(self, fixtures):
+        self.fixtures = fixtures
+        self.fixture_names = sorted(self.fixtures.iterkeys())
+
+        #  TODO: set flags on fixtures that need edits
+        self.id = (len(self.fixture_names) * 100 ) + 1
+        self.set_pair()
+        
+    def prev(self):
+        self.id = (self.id-1) % len(self.fixture_names)
+        self.set_pair()
+    
+    def next(self):
+        self.id = (self.id+1) % len(self.fixture_names)
+        self.set_pair()
+    
+    def set_pair(self):
+        # -1 because DMX ids are indexed at 1 .. and arrays at 0
+        id_a = ((self.id     ) % len(self.fixture_names)) - 1
+        id_b = ((self.id + 1 ) % len(self.fixture_names)) - 1
+        log.debug('fp: %d %d' % ( id_a, id_b))
+        self.a = self.fixtures[self.fixture_names[id_a]]
+        self.b = self.fixtures[self.fixture_names[id_b]]
+        if self.a.located and self.b.located:
+            self.a.point_to(self.b)
+            self.b.point_to(self.a)
+        self.on()
+
+    def on(self):
+        self.a.on()
+        self.b.on()
+        
+    def locate(self):
+        if self.a.located and self.b.located:
+            self.a.point_to(self.b.location)
+            self.b.point_to(self.a.location)

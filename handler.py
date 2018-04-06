@@ -41,8 +41,6 @@ class DmxHandler:
         self.stored = Stored()
         self.joy = xbox.Joystick()
         self.stage = self.stored.stage(stage_name)
-        
-        log.debug('stage', self.stage)
 
         self.last_mode = 0
         wrapper = ClientWrapper()
@@ -80,7 +78,7 @@ class DmxHandler:
                    mode & MODE_RUN):
                 self.working = Scene(stored, scene, dmx)
             else:
-                self.working.close()
+#                self.working.close()
                 self.working = ''
             self.last_mode = mode
 

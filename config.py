@@ -45,6 +45,7 @@ class DFSConfig:
 
         self.shows = self.config['shows']
         self.fixture_profiles = self.config['fixture_profiles']
+        self.fixture_aspects = self.config['fixture_aspects']
         self.dmx = self.config['dmx']
         self.input = DMXInput(self.config['dmx']['input'])
         self.output = DMXOutput(self.config['dmx']['output'])
@@ -53,7 +54,3 @@ class DFSConfig:
         if name in self.shows:
             Show(self.shows[name], self.fixture_profiles)
             
-    def fixture_profile(self, name):
-        if name in self.fixture_profiles:
-            self.fixture_profiles[name]
-

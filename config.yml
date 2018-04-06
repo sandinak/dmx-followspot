@@ -1,0 +1,129 @@
+---
+dmx:
+  # where the input comes from
+  # this is the DMX Spot Controller ID
+  input: 
+    universe: 1
+    id: 1
+
+  # where the spots are.. currently limited to 1 universe
+  output:
+    universe: 2
+    
+shows:
+  default:
+    fixtures:
+      SDC-CS:
+        id: 4
+        type: LED_Spot
+        aspect: front_floor
+        x: 4.6
+        y: 0
+        z: 0
+
+      SDC-LW:
+        id: 399
+        type: LED_Wash
+        aspect: front_floor
+      SDC-RW:
+        id: 408
+        type: LED_Wash
+        aspect: front_floor
+      SDL-RF: 
+        id: 127
+        type: LED_Wash
+        aspect: front_floor
+      SDL-RS:
+        id: 465
+        type: Ralinto_Spot
+        aspect: front_floor
+        x: 0 
+        y: 0
+        z: 0
+
+    fixture_groups:
+      - name: all_spots
+        fixtures:
+          - SDC-CS
+          - SDC-LW
+          - SDC-RW
+
+fixture_aspects:
+  front_floor:
+    # direction of axis
+    x: 180
+    y: 0
+
+fixture_profiles:
+  LED_Wash:
+    h-range: 540
+    v-range: 184
+    channels:
+     - h
+     - v
+     - intensity
+     - red
+     - green
+     - blue
+     - white
+     - speed
+     - function
+    managed_attributes:
+     - h
+     - v
+ 
+  LED_Spot:
+    h-range: 540
+    v-range: 190
+    color_values:
+      white: 0
+      red: 15
+      green: 25
+      blue: 35
+    channels:
+     - h-coarse
+     - h-fine
+     - v-coarse
+     - v-fine
+     - movement_speed
+     - intensity
+     - strobe
+     - color
+     - gobo
+     - function
+    managed_attributes:
+     - h-coarse
+     - h-fine
+     - v-coarse
+     - v-fine
+ 
+  Ralinto_Spot:
+    h-range: 540
+    v-range: 184
+    color_values:
+      white: 0
+      red: 15
+      green: 25
+      blue: 35
+    channels:
+     - h-coarse
+     - h-fine
+     - v-coarse
+     - v-fine
+     - movement_speed
+     - intensity
+     - shutter
+     - color
+     - gobo
+     - gobo_rotation
+     - focus
+     - prism
+     - autoplay
+     - autoxy
+     - function
+    managed_attributes:
+     - h-coarse
+     - h-fine
+     - v-coarse
+     - v-fine
+ 
