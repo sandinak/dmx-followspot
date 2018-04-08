@@ -29,36 +29,3 @@ class Scene:
         self.scene = scene
         self.x = scene['x']
 
-class Scenes:
-    ''' 
-    Scenes .. and object that has all the scenes for an instance
-    '''
-    def __init__(self, path=SCENE_FILE):
-        self.path = path
-        self.read()
-
-    def read(self):
-        if os.path.exists(self.path):
-            log.info('reading %s' % path)
-            with open(path, 'r') as stream:
-                self.scenes = yaml.load(stream)
-        else:
-            # initialize array
-            self.scenes = []
-            for i in range(SCENE_COUNT):
-                self.scenes.append(dict(
-                    name='',
-                    fixture_group='',
-                    x=0,
-                    y=0,
-                    ))
-        return self.scenes  
-
-
-    def write(self):
-         with open(path, 'w') as yaml_file:
-             yaml.dump(self.scenes, yaml_file, default_flow_style=False)
-             
-    
-    def get(self,id):
-        return Scene(self.scenes[id])

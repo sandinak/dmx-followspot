@@ -18,9 +18,11 @@
 
 from __future__ import print_function
 import sys
-from config import *
-from handler import *
-from show import *
+sys.path.append('.')
+
+from config import DFSConfig
+from handler import DmxHandler
+from show import Show
 import scene
 import array
 import argparse

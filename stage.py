@@ -21,7 +21,9 @@ import logging as log
 import time
 import math
 import numpy
-from show import *
+from show import Fixture
+from show import FixtureGroup
+from show import Target
 
 def clamp(n, minn, maxn):
     return max(min(maxn, n), minn)
@@ -36,12 +38,25 @@ class Stage:
         self.all_lights = False
         
         # create objects to work with
+        # TODO: add stored info here.
         for fname in self.show.fixtures:
-            self.fixtures[fname] = Fixture(
-                fname, 
-                self.show.fixtures[fname], 
-                )
+            self.fixtures[fname] = Fixture( self.show, fname)
         self.fp = FixturePair(self.fixtures)
+
+    def run(self, joy, dmx):
+        
+        t = Target(8,8,5)
+        
+        
+         # handle movement
+         lx = joy.leftX()
+         ly = joy.leftY()
+         rx = joy.rightX()
+         ry = joy.rightY()
+         if lx or ly:
+             self.scene.x += self.speed * lx/100
+             self.scene.y += self.speed * ly/100
+         
 
        
     def edit(self, joy, dmx):
@@ -73,21 +88,21 @@ class Stage:
             self.speed = clamp(self.speed-50, 25, 500)
             log.debug(' dec speed: %d' % self.speed)
 
-        # handle movement
-        lx = joy.leftX()
-        ly = joy.leftY()
-        rx = joy.rightX()
-        ry = joy.rightY()
-        if lx or ly:
-            self.fp.a.update_coordinates(
-                (self.speed * lx), 
-                (self.speed * ly))
-
-        if rx or ry: 
-            self.fp.b.update_coordinates(
-                (self.speed * rx), 
-                (self.speed * ry))
-        
+#         # handle movement
+         lx = joy.leftX()
+         ly = joy.leftY()
+         rx = joy.rightX()
+         ry = joy.rightY()
+         if lx or ly:
+             self.fp.a.update_coordinates(
+                 (self.speed * lx), 
+                 (self.speed * ly))
+ 
+         if rx or ry: 
+             self.fp.b.update_coordinates(
+                 (self.speed * rx), 
+                 (self.speed * ry))
+         
         # handle light 
         turn_lights = ''
         if self.all_lights ==  False and joy.rightTrigger():
@@ -139,7 +154,8 @@ class FixturePair(Stage):
         log.debug('fp: %d %d' % ( id_a, id_b))
         self.a = self.fixtures[self.fixture_names[id_a]]
         self.b = self.fixtures[self.fixture_names[id_b]]
-        if self.a.located and self.b.located:
+        if self.a.located() and self.b.located():
+        
             self.a.point_to(self.b)
             self.b.point_to(self.a)
         self.on()

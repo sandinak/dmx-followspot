@@ -76,7 +76,7 @@ class DmxHandler:
                 self.working = Stage(self.stage, self.show, self.stored)
             elif ( mode & MODE_EDIT_SCENE or
                    mode & MODE_RUN):
-                self.working = Scene(stored, scene, dmx)
+                self.working = Scene(scene, config)
             else:
 #                self.working.close()
                 self.working = ''
