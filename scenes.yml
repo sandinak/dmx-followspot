@@ -1,7 +1,5 @@
----
-- name: testing
-  fixture_group: all_spots
-  x: 8
-  y: 8
+- fixture_group: spots
+  name: testing
+  x: 4
+  y: 16
   z: 5
-  

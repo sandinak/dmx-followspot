@@ -23,29 +23,25 @@ import math
 import os
 import yaml
 import pprint
+import time
 
 SCENE_FILE='scenes.yml'
 # matches 
 SCENE_COUNT=255
 
-def angle_between(p1, p2):
-    ang1 = np.arctan2(*p1[::-1])
-    ang2 = np.arctan2(*p2[::-1])
-    return np.rad2deg((ang1 - ang2) % (2 * np.pi))
-
-def distance_between(p1, p2):
-    return math.sqrt((p1[1] - p1[0])**2 + (p2[1] - p2[0])**2)
 
 def clamp(n, minn, maxn):
     return max(min(maxn, n), minn)
 
 
+''' an object that defines all fixtures used in an environment'''
 class Show:
     def __init__(self, config, name):
         self.data = config.shows[name]
         self.fixture_aspects = config.fixture_aspects
         self.fixture_groups=self.data['fixture_groups']
         self.fixtures = self.data['fixtures']
+        self.fixture_group_names = sorted(self.fixture_groups.iterkeys())
 
         for fname in self.fixtures:
             fixture = self.fixtures[fname]
@@ -56,38 +52,160 @@ class Show:
             if aspect in config.fixture_aspects:
                 fixture['aspect'] = config.fixture_aspects[aspect]
 
-
+''' a stored object that defines a fixture group and starting location'''
 class Scene:
-    def __init__(self, scene_id, config, path=SCENE_FILE):
-        if not os.path.exists():
+    def __init__(self, show, scene_id, path=SCENE_FILE):
+        self.show = show
+        self.scene_id = scene_id
+        self.path = path
+
+        if not os.path.exists(path):
             print('missing %s, cannot run.' % path)
             sys.exit(1)
         with open(path, 'r') as stream:
             self.data = yaml.load(stream)
+        self.speed = 40
+        self.deadzone = 6000
         self.scene = self.data[scene_id]
-        self.fixturegroup = self.scene['fixture_group']
-        self.x =  self.scene['x']
-        self.x =  self.scene['y']
-        self.x =  self.scene['z']
-    
+        self.edit_mode = 0
+        self.all_lights = False
+        self.name = self.scene['name']
+        self.fixture_group = FixtureGroup(self.show, self.scene['fixture_group'])
+        self.target = Target(
+            self.name, 
+            self.scene['x'], 
+            self.scene['y'], 
+            self.scene['z'])
+        self.fixture_group.point_to(self.target)
+
+    def save(self, path=SCENE_FILE):
+        if not os.path.exists(path):
+            print('missing %s, cannot save.' % path)
+        with open(path, 'r') as stream:
+            data = yaml.load(stream)
+        data[self.scene_id] = self.scene
+        data[self.scene_id]['x'] = self.target.x
+        data[self.scene_id]['y'] = self.target.y
+        data[self.scene_id]['z'] = self.target.z
+
+        with open(path, 'w') as stream:
+            yaml.dump(data, stream, default_flow_style=False)
+
+    ''' take input and modify position'''
+    def run(self, joy, dmx):
+        if not edit_mode and joy.Start():
+            edit_mode = 1
+        elif edit_mode and joy.Start():
+            edit_mode = 0
         
+        if edit_mode:
+            dmx=handle_commands(joy.dmx)
+
+        dmx=self.handle_movement(joy,dmx)
+        return dmx
+        
+    def edit(self,joy,dmx):
+        dmx=self.handle_commands(joy, dmx)
+        dmx=self.handle_lights(joy, dmx)
+        dmx=self.handle_movement(joy, dmx)
+        return self.fixture_group.update_dmx(dmx)
+        
+    def handle_commands(self, joy, dmx):
+        if joy.B():
+            log.info('saving scene %d' % self.scene_id )
+            self.save()
+        elif joy.rightBumper():
+            self.fixture_group.lights_off()
+            self.fixture_group = FixtureGroup(
+                self.show, 
+                self.show.fixture_group_names[
+                    (self.show.fixture_group_names.index(self.fixture_group.name) + 1) % 
+                    len(self.show.fixture_group_names)
+                    ]
+                )
+            self.fixture_group.point_to(self.target)
+        elif joy.leftBumper():
+            self.fixture_group.lights_off()
+            self.fixture_group = FixtureGroup(
+                self.show, 
+                self.show.fixture_group_names[
+                    (self.show.fixture_group_names.index(self.fixture_group.name) - 1) % 
+                    len(self.show.fixture_group_names)
+                    ]
+                )
+            self.fixture_group.point_to(self.target)
+            
+        return dmx
+
+    def handle_movement(self, joy, dmx):
+        if joy.dpadUp():
+            self.speed = clamp(self.speed+5, 2, 100)
+            log.debug(' speed: %d' % self.speed)
+            time.sleep(0.2)
+        elif joy.dpadDown():
+            self.speed = clamp(self.speed-5, 2, 100)
+            log.debug(' speed: %d' % self.speed)
+            time.sleep(0.2)
+        # handle movement
+        rx = joy.rightX(self.deadzone)
+        ry = joy.rightY(self.deadzone)
+        if rx or ry:
+            self.target.x += self.speed * rx/100
+            self.target.y += self.speed * ry/100
+            log.debug('target: %f, %f' % (self.target.x, self.target.y))
+            self.fixture_group.point_to(self.target)
+        return dmx
+    
+    def handle_lights(self, joy, dmx):
+        # handle light 
+        if self.all_lights ==  False and joy.rightTrigger():
+            self.all_lights = True
+            self.fixture_group.lights_on()
+            log.debug('all_on')
+            time.sleep(0.2)
+            return self.fixture_group.update_dmx(dmx)
+        elif self.all_lights == True and joy.rightTrigger():
+            self.all_lights = False
+            self.fixture_group.lights_off()
+            log.debug('all_off')
+            time.sleep(0.2)
+            return self.fixture_group.update_dmx(dmx)
+        return dmx
 
 
-                
+''' things on the stage we point to'''
 class Target:
-    def __init__(self, x, y, z):
+    def __init__(self, name, x, y, z):
+        self.name = name
         self.x = x
         self.y = y
         self.z = z
 
+''' groups of fixtures we modify as part of the run operation'''
 class FixtureGroup:
-    def __init__(self, fixtures):
-        self.fixtures = fixtures
-        
-        
-    def point(self, target):
-        for f in fixtures:
-            f.point_to(target)
+    def __init__(self, show, name):
+        self.show = show
+        self.name = name
+        self.fixtures = dict()
+        for f in show.fixture_groups[name]:
+            self.fixtures[f] = Fixture(show, f)
+
+    def point_to(self, target):
+        for f in self.fixtures:
+            self.fixtures[f].point_to(target)
+
+    def update_dmx(self, dmx):
+        for f in self.fixtures:
+            dmx = self.fixtures[f].update_dmx(dmx)
+        return dmx
+
+    def lights_on(self):
+        for f in self.fixtures:
+            self.fixtures[f].on()
+
+    def lights_off(self):
+        for f in self.fixtures:
+            self.fixtures[f].off()
 
 class Fixture:
     def __init__(self, show, name):
@@ -117,7 +235,7 @@ class Fixture:
         self.h_x_axis = (self.hx * 255)
         self.v_z_axis = (self.vz * 255)
         
-        log.debug('%s setting h_x_axis: %f from %f' % (self.name, self.h_x_axis,self.hx))
+        log.debug('%s h_x_axis: %f' % (self.name, self.h_x_axis))
 
         # setup rotation and 
         self.h_rotation = -1
@@ -165,51 +283,49 @@ class Fixture:
         return (self.x, self.y, self.z)
             
     def point_to(self, target):
-        log.debug('pointing %s at %s which rotates %d ' % (
-                self.name, target.name, self.h_rotation ))
         # determine target vector
         pa = v.Point(self.x, self.y, self.z)
         pb = v.Point(target.x, target.y, target.z)
         vt = v.Vector.from_points(pa, pb)
         # determine this fixtures settings
         # H .. relative to x axis
-        px = v.Point(self.x+1, self.y, 0)
+        px = v.Point(self.x+100, self.y, 0)
         vx = v.Vector.from_points(pa, px) 
         # absolute angle
-        ha = vt.angle(vx) 
-        # compute based on rotation
-        if ( self.h_rotation == -1 and target.x < self.x ):
-            # CCW
-#            log.debug('  ccw adding 180 %f to %f ' % (ha, 360-ha))
+        ha = vx.angle(vt) 
+
+        # fip angle if we pass the y axis
+        if ( self.h_rotation == -1 and target.y < self.y ):
             ha = 360 - ha
 
-        elif ( self.h_rotation == 1 and target.x > self.x ):
-            # CW
-#            log.debug('  cw adding 180 %f to %f ' % (ha, 360-ha))
+        elif ( self.h_rotation == 1 and target.y < self.y ):
+            log.debug('reverse %f to %f' % (ha, 360-ha))
             ha = 360 - ha
 
         # V ... relative to straight vector - height
         pz = v.Point(target.x, target.y, self.z)
         vz = v.Vector.from_points(pa, pz)
-        va = vt.angle(vz)
+        if target.z <= 0: 
+            va = 0 
+        else: 
+            va = vt.angle(vz)
+        self.set_angles(ha, va, target)
 
-#        log.debug('  s: %d, %d t: %d, %d ha: %d, va: %d' % ( 
-#            self.x, self.y, target.x, target.y, ha, va))
 
-        self.set_angles(ha, va)
-
-
-    def set_angles(self, hd ,vd):
+    def set_angles(self, ha ,va, target):
         self.h = (
-            self.h_x_axis + ((hd * 65535) / self.h_range) 
+            self.h_x_axis + ((ha * 65535) / self.h_range) * (self.h_rotation*-1)
         )
-#        log.debug('  h: %f + %f = %f ' % (
-#            self.h_x_axis/255,
-#            (hd*65535/self.h_range)/255,
-#            self.h/255))
         self.v = (
-            self.v_z_axis + ((vd * 65535)/ self.v_range)
+            self.v_z_axis + ((va * 65535)/ self.v_range) 
         )
+        log.debug('%s s: %f,%f t: %f,%f ha: %f h0: %f va: %f v0: %f f: %f, %f' % (
+            self.name, 
+            self.x, self.y, 
+            target.x, target.y, 
+            ha, self.h_x_axis/255,
+            va, self.v_z_axis/255,
+            self.h/255, self.v/255))
         self.set_coordinates()
 
 
@@ -219,9 +335,6 @@ class Fixture:
             self.dmx['h-fine']      = int(self.h % 255)
             self.dmx['v-coarse']    = int(self.v/255)
             self.dmx['v-fine']      = int(self.v % 255)
-            log.debug('%s  8-bit %f,%f' % (self.name, 
-                                    self.dmx['h-coarse'], 
-                                    self.dmx['v-coarse']))
         elif 'h' in self.dmx:
             self.dmx['h'] = int(self.h/255)
             self.dmx['v'] = int(self.v/255)

@@ -42,25 +42,8 @@ class Stage:
         for fname in self.show.fixtures:
             self.fixtures[fname] = Fixture( self.show, fname)
         self.fp = FixturePair(self.fixtures)
-
-    def run(self, joy, dmx):
         
-        t = Target(8,8,5)
-        
-        
-         # handle movement
-         lx = joy.leftX()
-         ly = joy.leftY()
-         rx = joy.rightX()
-         ry = joy.rightY()
-         if lx or ly:
-             self.scene.x += self.speed * lx/100
-             self.scene.y += self.speed * ly/100
-         
-
-       
-    def edit(self, joy, dmx):
-
+    def handle_fp_cmds(self, joy):
         # rotate thru working pairs
         if joy.leftBumper():
             log.debug('dec fp')
@@ -80,6 +63,8 @@ class Stage:
         elif joy.dpadLeft():
             self.fp.a.update_focus(-8)
 
+    def handle_movement(self, joy):
+        # change speed
         if joy.dpadUp():
             self.speed = clamp(self.speed+50, 25, 500)
             log.debug(' inc speed: %d' % self.speed)
@@ -87,45 +72,42 @@ class Stage:
         elif joy.dpadDown():
             self.speed = clamp(self.speed-50, 25, 500)
             log.debug(' dec speed: %d' % self.speed)
+         # handle movement
+        lx = joy.leftX()
+        ly = joy.leftY()
+        rx = joy.rightX()
+        ry = joy.rightY()
+        if lx or ly:
+            self.fp.a.update_coordinates(
+                (self.speed * lx), 
+                (self.speed * ly))
+        if rx or ry: 
+            self.fp.b.update_coordinates(
+                (self.speed * rx), 
+                (self.speed * ry))
 
-#         # handle movement
-         lx = joy.leftX()
-         ly = joy.leftY()
-         rx = joy.rightX()
-         ry = joy.rightY()
-         if lx or ly:
-             self.fp.a.update_coordinates(
-                 (self.speed * lx), 
-                 (self.speed * ly))
- 
-         if rx or ry: 
-             self.fp.b.update_coordinates(
-                 (self.speed * rx), 
-                 (self.speed * ry))
-         
+    def handle_lights(self,joy):
         # handle light 
-        turn_lights = ''
         if self.all_lights ==  False and joy.rightTrigger():
             self.all_lights = True
-            turn_lights = 'on'
+            self.fixtures[fixture].on()
             log.debug('all_on')
             time.sleep(0.2)
 
         elif self.all_lights == True and joy.rightTrigger():
             self.all_lights = False
-            turn_lights = 'off'
+            self.fixtures[fixture].off()
             log.debug('all_off')
             time.sleep(0.2)
 
+
+    def edit(self, joy, dmx):
+        self.handle_fp_cmds(joy)
+        self.handle_movement(joy)
+        self.handle_lights(joy)
+
         # walk the fixtures and handle any all config
         for fixture in self.fixtures:
-            # handle triggered lights
-            if turn_lights == 'on':
-                self.fixtures[fixture].on()
-                self.turn_lights = ''
-            elif turn_lights == 'off':
-                self.fixtures[fixture].off()
-
             dmx = self.fixtures[fixture].update_dmx(dmx)
         return dmx
 

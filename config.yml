@@ -12,62 +12,60 @@ dmx:
     
 shows:
   default:
+    # list of fixtures in your show
     fixtures:
-      SDC-LW:
-        id: 408
-        type: LED_Wash
-        aspect: front_floor
+      SDL-RS:
+        id: 465
+        type: Ralinto_Spot
         x: 0
-        y: 0
-        z: 0
-      SDC-CS:
-        id: 4
-        type: LED_Spot
-        aspect: front_floor
-        x: .6666
-        y: 0
-        z: 0
-      SDC-RW:
-        id: 399
-        type: LED_Wash
-        aspect: front_floor
-        x: 1.3
-        y: 0
+        y: .3
         z: 0
       SDL-RF: 
         id: 127
         type: LED_Wash
-        aspect: front_floor
-        x: 4.75
-        y: 2.5
+        x: .666
+        y: .3
         z: 0
-      SDL-RS:
-        id: 465
-        type: Ralinto_Spot
-        aspect: front_floor
-        x: 5.5
-        y: 2.5
+      SDC-RW:
+        id: 399
+        type: LED_Wash
+        x: 3.333
+        y: 0 
+        z: 0
+      SDC-CS:
+        id: 4
+        type: LED_Spot
+        x: 4
+        y: 0
+        z: 0
+      SDC-LW:
+        id: 408
+        type: LED_Wash
+        x: 4.666
+        y: 0
         z: 0
 
     fixture_groups:
-      - name: all_spots
-        fixtures:
-          - SDC-CS
-          - SDC-LW
-          - SDC-RW
-          - SDL-RF
-          - SDL-RS
-
-fixture_aspects:
-  front_floor:
-
+      spots:
+        - SDC-CS
+        - SDL-RS
+      washes:
+        - SDC-LW
+        - SDC-RW
+        - SDL-RF
+      all:
+       - SDC-LW
+       - SDC-CS
+       - SDC-RW
+       - SDL-RF
+       - SDL-RS
 
 fixture_profiles:
   LED_Wash:
     h-range: 540
     v-range: 184
     # direction of x = 0 for h
-    hx: 45
+    hx: 128
     # direction of x,y for v
     vz: 0
     channels:
@@ -88,9 +86,9 @@ fixture_profiles:
     h-range: 540
     v-range: 190
     # direction of x = 0 for h
-    hx: 130
+    hx: 45
     # direction of x,y for v
-    vz: 10
+    vz: 15
     color_values:
       white: 0
       red: 15
@@ -115,12 +113,12 @@ fixture_profiles:
  
   Ralinto_Spot:
     h-range: 540
-    v-range: 184
+    v-range: 210
     h-rotation: cw
     # direction of x = 0 for h
-    hx: 45
+    hx: 129
     # direction of x,y for v
-    vz: 5
+    vz: 10
     color_values:
       white: 0
       red: 15
