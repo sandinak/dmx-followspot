@@ -4,7 +4,7 @@ dmx:
   # this is the DMX Spot Controller ID
   input: 
     universe: 1
-    id: 1
+    id: 20
 
   # where the spots are.. currently limited to 1 universe
   output:
@@ -12,55 +12,77 @@ dmx:
     
 shows:
   default:
-    # list of fixtures in your show
     fixtures:
-      SDL-RS:
+      F-SR-PS:
+        id: 257
+        type: 36LED_PS
+        x: 0
+        y: 0
+        z: 0
+
+      # SR Board
+      F-SR-S:
         id: 465
         type: Ralinto_Spot
-        x: 0
-        y: .3
+        x: 2
+        y: 0
         z: 0
-      SDL-RF: 
+      F-SR-1-P: 
         id: 127
         type: LED_Wash
-        x: .666
-        y: .3
+        x: 2.3
+        y: 0
         z: 0
-      SDC-RW:
+
+      F-SC-1-P:
         id: 399
         type: LED_Wash
         x: 3.333
         y: 0 
         z: 0
-      SDC-CS:
-        id: 4
-        type: LED_Spot
-        x: 4
-        y: 0
-        z: 0
-      SDC-LW:
+      F-SC-2-P:
         id: 408
         type: LED_Wash
         x: 4.666
         y: 0
         z: 0
+      F-SC-S:
+        id: 185
+        type: LED_Spot
+        x: 4
+        y: 0
+        z: 0
+
+      F-SL-1-P: 
+        id: 109
+        type: LED_Wash
+        x: 2.3
+        y: 0
+        z: 0
+      F-SL-S:
+        id: 480
+        type: Ralinto_Spot
+        x: 2
+        y: 0
+        z: 0
+
+      F-SL-PS:
+        id: 495
+        type: 36LED_PS
 
     fixture_groups:
-      spots:
-        - SDC-CS
-        - SDL-RS
-      washes:
-        - SDC-LW
-        - SDC-RW
-        - SDL-RF
-      all:
-       - SDC-LW
-       - SDC-CS
-       - SDC-RW
-       - SDL-RF
-       - SDL-RS
+      F-PS:
+        - F-SR-PS
+        - F-SL-PS
+
+fixture_aspects:
 
 fixture_profiles:
+  36Led_PS:
+    h-range: 540
+    v-range: 265
+    hx: 42
+    vz: 32
   LED_Wash:
     h-range: 540
     v-range: 184

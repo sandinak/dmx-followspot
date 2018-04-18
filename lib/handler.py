@@ -33,26 +33,26 @@ OP_TECH = 0x01
 # mode masks
 #-- normal operation .. no interference
 MODE_PASSTHRU    = 0x00
-MODE_SCENE_PLAY  = 0x01
+MODE_SCENE_RUN   = 0x01
 MODE_SCENE_EDIT  = 0x02
 MODE_STAGE_EDIT  = 0x03
 
 class DmxHandler:
-    def __init__(self, config, show, stage_name):
+    def __init__(self, config, show, stage):
         self.config = config
         self.input = config.input
         self.output = config.output
         self.show = show
-        self.stored = Stored()
+        self.stage = stage
         self.joy = xbox.Joystick()
-        self.stage = self.stored.stage(stage_name)
+        # handle modes
         self.ctrl_mode = MODE_PASSTHRU
-
         self.last_mode = 0
         wrapper = ClientWrapper()
         self.tx = wrapper.Client()
     
     def _txDmx(status):
+        ''' handle DMX send issues '''
         if status.Succeeded():
             log.debug('Success!')
         else:
@@ -63,8 +63,11 @@ class DmxHandler:
             self.wrapper.Stop()
 
     def cdata(self,dmx):
-        # offset because list indexing starts with 0
-        # but dmx id starts with 1
+        ''' 
+        read controller data from DMX data
+            - offset because list indexing starts with 0
+              but dmx id starts with 1
+        '''
         mode    = dmx[self.input.id-1]
         scene   = dmx[self.input.id]
         fg      = dmx[self.input.id+1]

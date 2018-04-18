@@ -25,18 +25,34 @@ from show import Fixture
 from show import FixtureGroup
 from show import Target
 
+STAGE_FILE='stages.yml'
+
 def clamp(n, minn, maxn):
     return max(min(maxn, n), minn)
 
-
 class Stage:
-    def __init__(self, stage, show, stored):
-        self.stage = stage
+    def __init__(self, show, name, path=STAGE_FILE):
+        if not os.path.exists(path):
+            print('missing %s, cannot run.' % path)
+            sys.exit(1)
+        with open(path, 'r') as stream:
+            self.data = yaml.load(stream)
+            
+            
+        # create stage if it doesn't exist
+        self.stages = self.data['stages']
+        if name not in self.stages:
+            log.info('creating stage %s' % name)
+            self.stages[name] = dict()
+            self.stage = self.stages[name]
+            self.stage['fixtures'] = dict()
+            for fixture in show.fixtures:
+                self.sta
+
         self.show = show
         self.speed = 100
-        self.fixtures=dict()
         self.all_lights = False
-        
+
         # create objects to work with
         # TODO: add stored info here.
         for fname in self.show.fixtures:

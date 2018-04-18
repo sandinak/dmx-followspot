@@ -18,7 +18,7 @@
 
 from __future__ import print_function
 import sys
-sys.path.append('.')
+sys.path.append('lib')
 
 from config import DFSConfig
 from handler import DmxHandler
@@ -39,6 +39,7 @@ from ola.ClientWrapper import ClientWrapper
 __author__ = 'branson@sandsite.org'
 
 def setup_logging(args):
+    '''setup global logging and send a start entry''' 
     global debug, verbose
     if args.debug:
         log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
@@ -52,30 +53,31 @@ def setup_logging(args):
         log.basicConfig(format="%(levelname)s: %(message)s")
 
 
-''' read in the arguments '''
 def parse_args():
-      parser = argparse.ArgumentParser(
-          description="DMX Followspot")
-      # defaults
-      parser.set_defaults(verbose=False)
-      parser.set_defaults(show_errors=False)
-      parser.set_defaults(check_mode=False)
-      parser.add_argument("-v", "--verbose", action="store_true",
-                          help="Set verbose output.")
-      parser.add_argument("-d", "--debug", action="store_true",
-                          help="Show debugging output.")
-      parser.add_argument("-c", "--check-mode", action="store_true",
-                          help="check config file for readability")
+    ''' 
+    read in commandline arguments 
+    '''
+    parser = argparse.ArgumentParser(
+        description="DMX Followspot")
+    # defaults
+    parser.set_defaults(verbose=False)
+    parser.set_defaults(show_errors=False)
+    parser.set_defaults(check_mode=False)
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Set verbose output.")
+    parser.add_argument("-d", "--debug", action="store_true",
+                        help="Show debugging output.")
+    parser.add_argument("-c", "--check-mode", action="store_true",
+                        help="check config files for readability")
 
-      parser.set_defaults(stage=False)
-      parser.add_argument("-l", "--stage-name", 
-                          default='default',
-                          help="load configured location")
+    parser.add_argument("-l", "--stage-name", 
+                        default='default',
+                        help="load configured location")
 
-      parser.add_argument("-s", "--show-name",
-                          default='default',
-                          help="load specific show")
-      return parser.parse_args()
+    parser.add_argument("-s", "--show-name",
+                        default='default',
+                        help="load specific show")
+    return parser.parse_args()
 
 
 def main():
@@ -83,10 +85,16 @@ def main():
     setup_logging(args)
 
     config=DFSConfig()
-    show=Show(config,args.show_name)
+    show=Show(config, args.show_name)
 
     if not show:
         print('no such show %s', args.show_name)
+        sys.exit(1)
+        
+    stage = Stage(show, args.stage_name, args.create)
+    if not stage:
+        # TODO handle creation
+        print('could not load or create stage %s', args.stage_name)
         sys.exit(1)
 
     if args.check_mode:

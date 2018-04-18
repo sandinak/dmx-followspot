@@ -26,10 +26,11 @@ import pprint
 import time
 
 SCENE_FILE='scenes.yml'
-# matches 
+
+# matches DMX count for a single channel
 SCENE_COUNT=255
 
-
+''' require an int to remain between a min and max value '''
 def clamp(n, minn, maxn):
     return max(min(maxn, n), minn)
 
@@ -42,18 +43,26 @@ class Show:
         self.fixture_groups=self.data['fixture_groups']
         self.fixtures = self.data['fixtures']
         self.fixture_group_names = sorted(self.fixture_groups.iterkeys())
+        
+        self.fixture_groups['all'] = list(self.fixtures.keys())
 
         for fname in self.fixtures:
             fixture = self.fixtures[fname]
             type = fixture['type']
-            aspect = fixture['aspect']
+            if 'aspect' in fixture:
+                aspect = fixture['aspect']
+                if aspect in config.fixture_aspects:
+                    fixture['aspect'] = config.fixture_aspects[aspect]
             if type in config.fixture_profiles:
                 fixture['profile'] = config.fixture_profiles[type]
-            if aspect in config.fixture_aspects:
-                fixture['aspect'] = config.fixture_aspects[aspect]
 
-''' a stored object that defines a fixture group and starting location'''
+
 class Scene:
+    ''' 
+    a stored object that defines a fixture group,
+    what parameters are controlled via the toolset and
+    a starting location and height for this Target
+    '''
     def __init__(self, show, scene_id, path=SCENE_FILE):
         self.show = show
         self.scene_id = scene_id
@@ -70,7 +79,9 @@ class Scene:
         self.edit_mode = 0
         self.all_lights = False
         self.name = self.scene['name']
-        self.fixture_group = FixtureGroup(self.show, self.scene['fixture_group'])
+        self.fixture_group = FixtureGroup(
+            self.show, 
+            self.scene['fixture_group'])
         self.target = Target(
             self.name, 
             self.scene['x'], 
@@ -78,6 +89,8 @@ class Scene:
             self.scene['z'])
         self.fixture_group.point_to(self.target)
 
+
+    ''' write the scene file out '''
     def save(self, path=SCENE_FILE):
         if not os.path.exists(path):
             print('missing %s, cannot save.' % path)
@@ -91,6 +104,7 @@ class Scene:
         with open(path, 'w') as stream:
             yaml.dump(data, stream, default_flow_style=False)
 
+
     ''' take input and modify position'''
     def run(self, joy, dmx):
         if not edit_mode and joy.Start():
@@ -103,13 +117,17 @@ class Scene:
 
         dmx=self.handle_movement(joy,dmx)
         return dmx
-        
+
+
+    ''' edit mode '''    
     def edit(self,joy,dmx):
         dmx=self.handle_commands(joy, dmx)
         dmx=self.handle_lights(joy, dmx)
         dmx=self.handle_movement(joy, dmx)
         return self.fixture_group.update_dmx(dmx)
-        
+
+
+    ''' handle command type input'''        
     def handle_commands(self, joy, dmx):
         if joy.B():
             log.info('saving scene %d' % self.scene_id )
@@ -134,9 +152,10 @@ class Scene:
                     ]
                 )
             self.fixture_group.point_to(self.target)
-            
         return dmx
 
+
+    ''' handle movement type input'''
     def handle_movement(self, joy, dmx):
         if joy.dpadUp():
             self.speed = clamp(self.speed+5, 2, 100)
@@ -156,6 +175,7 @@ class Scene:
             self.fixture_group.point_to(self.target)
         return dmx
     
+    ''' handle light control'''
     def handle_lights(self, joy, dmx):
         # handle light 
         if self.all_lights ==  False and joy.rightTrigger():
@@ -181,6 +201,7 @@ class Target:
         self.y = y
         self.z = z
 
+
 ''' groups of fixtures we modify as part of the run operation'''
 class FixtureGroup:
     def __init__(self, show, name):
@@ -190,23 +211,31 @@ class FixtureGroup:
         for f in show.fixture_groups[name]:
             self.fixtures[f] = Fixture(show, f)
 
+
+    ''' point this group at this target '''
     def point_to(self, target):
         for f in self.fixtures:
             self.fixtures[f].point_to(target)
 
+
+    ''' update DMX values for all fixtures in this group'''
     def update_dmx(self, dmx):
         for f in self.fixtures:
             dmx = self.fixtures[f].update_dmx(dmx)
         return dmx
 
+
+    ''' turn all the lights on '''
     def lights_on(self):
         for f in self.fixtures:
             self.fixtures[f].on()
 
+    ''' turn all the lights off '''
     def lights_off(self):
         for f in self.fixtures:
             self.fixtures[f].off()
 
+''' a unique device we manage'''
 class Fixture:
     def __init__(self, show, name):
         self.show = show
@@ -217,43 +246,42 @@ class Fixture:
         self.profile = self.data['profile']
 
         # we can't set up degree per step because we don't know
-        # if we're in 8-bit or 16-bit mode
+        # if we're in 8-bit or 16-bit mode.. so we define the 
+        # full range .. and then will interpolate.
         self.h_range = self.profile['h-range']
         self.v_range = self.profile['v-range']
 
-        # setup aspect of the fixture
+        # setup aspect of the fixture... this defines the two 
+        # major axis we track 
+        #  - x-axis (x,0,0) in h positioning
+        #  - z-axis (0,0,z) in v positioning
         self.aspect = self.data['aspect']
         if 'hx' in self.profile:
             self.hx = self.profile['hx']
             self.vz = self.profile['vz']
-        else: 
+        else:
             self.hx = self.aspect['hx']
             self.vz = self.aspect['vz']
-
-        # setup x and z axis so we know where to go
-        # this is relative to the most significant DMX value for H and V 
+        # multiply to 16 bit value
         self.h_x_axis = (self.hx * 255)
         self.v_z_axis = (self.vz * 255)
-        
-        log.debug('%s h_x_axis: %f' % (self.name, self.h_x_axis))
 
-        # setup rotation and 
+        # setup rotation management
         self.h_rotation = -1
         if (('h-rotation' in self.profile and self.profile['h-rotation'] == 'cw') or
             (self.aspect and 'h-rotation' in self.aspect and self.aspect['h-rotation'] == 'cw')):
             self.h_rotation = 1
-
         self.v_rotation = -1
         if (('v-rotation' in self.profile and self.profile['v-rotation'] == 'cw') or
             (self.aspect and 'v-rotation' in self.aspect and self.aspect['v-rotation'] == 'cw')):
             self.v_rotation = 1
-#        else: 
-            # TODO: add for inverted install
+        # else: 
+        #     TODO: add for inverted install
 
         self.channels = self.profile['channels']
         self.managed_attributes = self.profile['managed_attributes']
         
-        # location
+        # location of the instrument.
         self.x = self.data['x'] if 'x' in self.data else None
         self.y = self.data['y'] if 'y' in self.data else None
         self.z = self.data['z'] if 'z' in self.data else None

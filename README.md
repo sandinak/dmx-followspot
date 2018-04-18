@@ -23,6 +23,14 @@ as hints and then prompting the operator to align the lights so the
 system can discover the stage.  However if you have a single stage .. 
 this can be setup 
 
+# Theory
+This software works by designating the stage as a space in 
+x,y,z coordinated planes with the origin at the farthest spot 
+Down Stage Right.  All Fixtures and Targets are referenced from 
+that point.  It then uses configuration, basic Euclidean geometry 
+and vectors to determine how to align designated moving head fixtures
+to the specified point on the stage. 
+
 
 # Requirements
 - A reasonable host to run as the passthrough, I am using a 
@@ -53,7 +61,8 @@ distance in the x,y plane
 - Fixtures - a list of existing fixtures with DMXid, type and location 
 if known
 - FixtureGroups - a predefined set of fixtures to use in a Scene 
-- Target - the location on the stage in the X,Y plane
+- Target - the location on the stage in the X,Y plane with a specific 
+height
 - Scene - a Fixture Group and Target
 
 ## Operational Modes
