@@ -1,0 +1,40 @@
+---
+36LED_PS:
+  h-range: 540
+  v-range: 265
+  hx: 42
+  vz: 32
+  channels:
+    - h-coarse
+    - v-coarse
+    - h-fine
+    - v-fine
+    - motor_speed
+    - intensity
+    - strobe
+    - red
+    - green
+    - blue
+    - white
+    - macro
+    - panel_macro
+    - auto_run
+    - focus
+    - reverse
+    - dimmer_speed
+
+LED_Wash:
+  h-range: 540
+  v-range: 184
+  hx: 128
+  vz: 0
+  channels:
+   - horizontal
+   - vertical
+   - intensity
+   - red
+   - green
+   - blue
+   - white
+   - speed
+   - function

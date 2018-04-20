@@ -19,12 +19,10 @@
 import sys
 import pprint
 from ola.ClientWrapper import ClientWrapper
-from state import *
-from stored import *
-from stage import *
 from show import Scene
 import xbox
 import logging as log
+import time
 
 # Operations
 OP_PROD = 0x00
@@ -32,92 +30,150 @@ OP_TECH = 0x01
 
 # mode masks
 #-- normal operation .. no interference
-MODE_PASSTHRU    = 0x00
-MODE_SCENE_RUN   = 0x01
-MODE_SCENE_EDIT  = 0x02
-MODE_STAGE_EDIT  = 0x03
+MODE_PASSTHRU = 0x00
+MODE_SCENE_RUN = 0x01
+MODE_SCENE_EDIT = 0x02
+MODE_STAGE_EDIT = 0x03
+
 
 class DmxHandler:
-    def __init__(self, config, show, stage):
+    def __init__(self, config, show, stage, joy):
         self.config = config
         self.input = config.input
         self.output = config.output
         self.show = show
         self.stage = stage
-        self.joy = xbox.Joystick()
-        # handle modes
-        self.ctrl_mode = MODE_PASSTHRU
+        self.joy = joy
+
+        # define base setup
+        self.mode = OP_PROD
+        self.joy_mode = OP_PROD
+        self.op = MODE_PASSTHRU
+
+        # define tracking
         self.last_mode = 0
+        self.last_op = 0
+        self.last_scene = 0
+
+        log.info('starting DMX handler op: %d, mode: %d' % (
+            self.op, self.mode))
         wrapper = ClientWrapper()
         self.tx = wrapper.Client()
-    
+
     def _txDmx(status):
         ''' handle DMX send issues '''
         if status.Succeeded():
             log.debug('Success!')
         else:
             log.error('Error: %s' % status.message)
-        
+
         # TODO -- need this?
         if self.wrapper:
             self.wrapper.Stop()
 
-    def cdata(self,dmx):
+    def read_dmx(self):
         ''' 
         read controller data from DMX data
             - offset because list indexing starts with 0
               but dmx id starts with 1
         '''
-        mode    = dmx[self.input.id-1]
-        scene   = dmx[self.input.id]
-        fg      = dmx[self.input.id+1]
-        return mode, scene, fg
+        dmx_i = self.input.id - 1
+        self.op =       self.dmx[dmx_i]
+        self.mode =     self.dmx[dmx_i + 1]
+        self.scene =    self.dmx[dmx_i + 2]
 
+    def read_joy_mode_changes(self):
+        # log.debug('joystick input %s' % self.joy.reading)
+        # allow controller buttons to enter edit modes
+        if self.op == OP_PROD:
+            # do nothing if in production mode
+            return
+
+        if self.joy.Start() and self.joy_mode == MODE_PASSTHRU:
+            self.joy_mode = MODE_SCENE_EDIT
+
+        elif self.joy.Guide() and self.joy_mode == MODE_PASSTHRU:
+            self.joy_mode = MODE_STAGE_EDIT
+            
+        elif self.joy.Back():
+            self.joy_mode = MODE_PASSTHRU
+            
+
+    def op_change(self):
+        ''' 
+        handle operation change. 
+        '''
+        if self.mode & OP_PROD:
+            log.info('operation changed to Production.')
+        elif self.mode & OP_TECH:
+            log.info('operation changed to Technical Editing.')
+
+    def mode_change(self):
+        ''' 
+        handle mode changes, we do this by loading a class
+        on self.working that will have methods for operation
+        '''
+        log.debug('mode changed to %d' % self.mode)
+        if self.mode == MODE_STAGE_EDIT:
+            log.debug('mode: stage edit %s ' % self.stage.name )
+            self.working = Stage(self.stage, self.show, self.stored)
+            self.joy.led(10)
+
+        elif (self.mode == MODE_SCENE_EDIT or
+              (self.mode == MODE_SCENE_EDIT and
+                self.scene != self.last_scene)):
+            log.debug('mode: scene edit %s' % self.scene)
+            self.working = Scene(self.show, self.scene)
+            self.joy.led(13)
+
+        elif (self.mode == MODE_SCENE_RUN or
+              (self.mode == MODE_SCENE_RUN and
+                self.scene != self.last_scene)):
+            log.debug('mode: scene run %s ' % self.scene)
+            self.working = Scene(self.show, self.scene)
+            self.joy.led(1) 
+
+        else:
+            log.debug('mode: passthrough')
+            self.joy.led(self.config.joystick['id'] + 1)
+            del self.working
 
     def handle(self, dmx):
-        op, mode, scene = self.cdata(dmx)
+        ''' 
+        handler callback for DMX input
+        '''
+        self.dmx = dmx
 
-        #-- if in tech mode .. controller can init mode change
-        #   but the console will be authoritative.
-        if op == OP_TECH and mode == MODE_PASSTHRU:
-            # allow controller buttons to enter edit modes
-            if self.joy.Back():
-                if self.ctrl_mode != MODE_SCENE_EDIT:
-                    self.ctrl_mode = MODE_SCENE_EDIT
-                else: 
-                    self.ctrl_mode = MODE_PASSTHRU
-            elif self.joy.Home():
-                if self.ctrl_mode != MODE_STAGE_EDIT:
-                    self.ctrl_mode = MODE_STAGE_EDIT
-                else: 
-                    self.ctrl_mode = MODE_PASSTHRU
-            mode = self.ctrl_mode
+        # read DMX mode changes
+        self.read_dmx()
 
-        #--- handle logic
-        # state change
-        if mode != self.last_mode:
-            log.debug('mode changed to %d' % mode)
-            # load class for working 
-            if mode == MODE_STAGE_EDIT: 
-                log.debug('mode: stage edit')
-                self.working = Stage(self.stage, self.show, self.stored)
-            elif mode == MODE_SCENE_EDIT :
-                log.debug('mode: scene edit')
-                self.working = Scene(self.show, scene)
-            elif mode == MODE_SCENE_RUN:
-                log.debug('mode: scene run')
-                self.working = Scene(self.show, scene)
-            else:
-                log.debug('mode: passthrough')
-#                self.working.close()
-                self.working = ''
-            self.last_mode = mode
+        # read joystick mode changes
+        if self.joy.refresh():
+            log.debug('joystick change %s' % self.joy.reading )
+            self.read_joy_mode_changes()
 
-        # handle mode
-        if mode & MODE_SCENE_RUN:
-            dmx = self.working.run(self.joy, dmx)
-        elif ( mode & MODE_STAGE_EDIT or
-               mode * MODE_SCENE_EDIT ):
-            dmx = self.working.edit(self.joy, dmx)
-        
-        self.tx.SendDmx(self.output.universe, dmx, self._txDmx)
+        # joystick overrides console in Tech mode
+        if (self.op == OP_TECH and
+            self.joy != MODE_PASSTHRU ):
+            self.mode = self.joy_mode
+
+        # handle logic changes,
+        # the sleep is to prevent button bounce.
+        if self.op != self.last_op:
+            self.op_change()
+            time.sleep(.2)
+            self.last_op = self.op
+        if self.mode != self.last_mode:
+            self.mode_change()
+            time.sleep(.2)
+            self.last_mode = self.mode
+            self.last_scene = self.scene
+
+        # handle operation based on mode.
+        if self.mode & MODE_SCENE_RUN:
+            self.dmx = self.working.run(self.joy, self.dmx)
+        elif (self.mode & MODE_STAGE_EDIT or
+              self.mode * MODE_SCENE_EDIT):
+            self.dmx = self.working.edit(self.joy, self.dmx)
+
+        self.tx.SendDmx(self.output.universe, self.dmx, self._txDmx)

@@ -17,36 +17,50 @@
 # Copyright (C) 2018 Branson Matheson
 
 from __future__ import print_function
-import sys
-sys.path.append('lib')
 
-from config import DFSConfig
-from handler import DmxHandler
-from show import Show
-import scene
-import array
 import argparse
-import logging as log
-import textwrap
-import yaml
+import array
+import atexit
 import io
 import os
 import pprint
-import xbox
+import signal
+import sys
+import textwrap
 
 from ola.ClientWrapper import ClientWrapper
+import yaml
+
+sys.path.append('lib')
+from config import DFSConfig
+from handler import DmxHandler
+import logging as log
+from show import Show
+from stage import Stage
+import xbox
+
 
 __author__ = 'branson@sandsite.org'
 
+
+def killall():
+    ''' cleanup subprocesses .. needed for joystick'''
+    os.killpg(os.getpgrp(), signal.SIGHUP)
+
+
 def setup_logging(args):
-    '''setup global logging and send a start entry''' 
+    '''setup global logging and send a start entry'''
     global debug, verbose
     if args.debug:
-        log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
+        log.basicConfig(
+            format="%(levelname)s: %(message)s",
+            level=log.DEBUG)
         log.debug("Debugging enabled.")
         debug = True
     elif args.verbose:
-        log.basicConfig(format="%(levelname)s: %(message)s", level=log.INFO)
+        log.basicConfig(
+            format="%(levelname)s: %(message)s",
+            level=log.INFO)
         log.info("Verbose output.")
         verbose = True
     else:
@@ -55,7 +69,7 @@ def setup_logging(args):
 
 def parse_args():
     ''' 
-    read in commandline arguments 
+    read in command-line arguments 
     '''
     parser = argparse.ArgumentParser(
         description="DMX Followspot")
@@ -70,7 +84,7 @@ def parse_args():
     parser.add_argument("-c", "--check-mode", action="store_true",
                         help="check config files for readability")
 
-    parser.add_argument("-l", "--stage-name", 
+    parser.add_argument("-l", "--stage-name",
                         default='default',
                         help="load configured location")
 
@@ -81,37 +95,42 @@ def parse_args():
 
 
 def main():
-    args=parse_args()
+    atexit.register(killall)
+    args = parse_args()
     setup_logging(args)
+    # read tool config
+    config = DFSConfig()
 
-    config=DFSConfig()
-    show=Show(config, args.show_name)
-
+    # setup show
+    show = Show(config, args.show_name)
     if not show:
         print('no such show %s', args.show_name)
         sys.exit(1)
-        
-    stage = Stage(show, args.stage_name, args.create)
+
+    # setup stage
+    stage = Stage(show, args.stage_name)
     if not stage:
-        # TODO handle creation
         print('could not load or create stage %s', args.stage_name)
         sys.exit(1)
+
+    # setup joystick
+    joy = xbox.Joystick()
 
     if args.check_mode:
         sys.exit(0)
 
-    log.info('starting DMX handler')
-    
-    handler = DmxHandler(config, show, args.stage_name)
+    handler = DmxHandler(config, show, stage, joy)
 
-    # setup data handler
+    # setup data handler, this is our callback loop
+    # as DMX data comes in constantly
     wrapper = ClientWrapper()
     rx = wrapper.Client()
-    rx.RegisterUniverse(config.input.universe, rx.REGISTER, handler.handle) 
+    rx.RegisterUniverse(
+        config.input.universe,
+        rx.REGISTER,
+        handler.handle)
     wrapper.Run()
-
-    handle_dmx(config)
 
 
 if __name__ == "__main__":
-      main()
+    main()

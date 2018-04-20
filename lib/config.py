@@ -18,39 +18,62 @@
 
 import os
 import yaml
+import glob
 import pprint
-CONFIG_FILE='config.yml'
+import logging as log
+CONFIG_FILE = 'dmxfs.yml'
 
-''' DMX input and output config '''
+
 class DMXInput:
-    def __init__(self,data):
+    def __init__(self, data):
         self.data = data
         self.universe = self.data['universe']
         self.id = self.data['id']
 
 
 class DMXOutput:
-    def __init__(self,data):
-        self.data=data
+    def __init__(self, data):
+        self.data = data
         self.universe = self.data['universe']
 
 
 class DFSConfig:
-    def __init__(self, path=CONFIG_FILE):
+    def __init__(self, path='config/%s' % CONFIG_FILE):
+        log.info('reading config from %s' % path)
         if not os.path.exists(path):
             print('missing %s, cannot run.' % path)
             sys.exit(1)
         with open(path, 'r') as stream:
             self.config = yaml.load(stream)
 
-        self.shows = self.config['shows']
-        self.fixture_profiles = self.config['fixture_profiles']
-        self.fixture_aspects = self.config['fixture_aspects']
+        self.fixture_profiles = self.load_fixture_profiles()
+
         self.dmx = self.config['dmx']
         self.input = DMXInput(self.config['dmx']['input'])
         self.output = DMXOutput(self.config['dmx']['output'])
-        
-    def show(self, name):
-        if name in self.shows:
-            Show(self.shows[name], self.fixture_profiles)
-            
+        self.joystick = self.config['joystick']
+
+    def load_fixture_profiles(self, path='config/fixture_profiles'):
+        ''' 
+        read in each .yml file in the directory as a set of 
+        fixtures.
+        '''
+        # TODO: recurse directories here?
+        all_fixtures = dict()
+        if not os.path.exists(path):
+            print('missing %s, cannot run.' % path)
+            sys.exit(1)
+        for f in glob.glob('%s/*.yml' % path):
+            log.info('reading %s' % f)
+            with open(f, 'r') as stream:
+                try:
+                    fixtures = yaml.load(stream)
+                except (yaml.yamlError, yaml.MarkedYamlError) as e:
+                    log.error(
+                        'cannot read %s : YAML error: %s' % (
+                            f,
+                            str(e)))
+            for k, v in fixtures.iteritems():
+                log.info('  loading fixture %s' % k)
+                all_fixtures[k] = v
+        return all_fixtures

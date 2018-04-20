@@ -1,0 +1,51 @@
+---
+
+LED_Spot:
+  h-range: 540
+  v-range: 190
+  hx: 45
+  vz: 15
+  color_values:
+    white: 0
+    red: 15
+    green: 25
+    blue: 35
+  channels:
+   - h-coarse
+   - h-fine
+   - v-coarse
+   - v-fine
+   - movement_speed
+   - intensity
+   - strobe
+   - color
+   - gobo
+   - function
+
+Ralinto_Spot:
+  h-range: 540
+  v-range: 210
+  h-rotation: cw
+  hx: 129
+  vz: 10
+  color_values:
+    white: 0
+    red: 15
+    green: 25
+    blue: 35
+  channels:
+   - h-coarse
+   - h-fine
+   - v-coarse
+   - v-fine
+   - movement_speed
+   - intensity
+   - shutter
+   - color
+   - gobo
+   - gobo_rotation
+   - focus
+   - prism
+   - autoplay
+   - autoxy
+   - function
