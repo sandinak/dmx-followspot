@@ -78,9 +78,9 @@ class DmxHandler:
               but dmx id starts with 1
         '''
         dmx_i = self.input.id - 1
-        self.op =       self.dmx[dmx_i]
-        self.mode =     self.dmx[dmx_i + 1]
-        self.scene =    self.dmx[dmx_i + 2]
+        self.op = self.dmx[dmx_i]
+        self.mode = self.dmx[dmx_i + 1]
+        self.scene = self.dmx[dmx_i + 2]
 
     def read_joy_mode_changes(self):
         # log.debug('joystick input %s' % self.joy.reading)
@@ -94,10 +94,9 @@ class DmxHandler:
 
         elif self.joy.Guide() and self.joy_mode == MODE_PASSTHRU:
             self.joy_mode = MODE_STAGE_EDIT
-            
+
         elif self.joy.Back():
             self.joy_mode = MODE_PASSTHRU
-            
 
     def op_change(self):
         ''' 
@@ -115,7 +114,7 @@ class DmxHandler:
         '''
         log.debug('mode changed to %d' % self.mode)
         if self.mode == MODE_STAGE_EDIT:
-            log.debug('mode: stage edit %s ' % self.stage.name )
+            log.debug('mode: stage edit %s ' % self.stage.name)
             self.working = Stage(self.stage, self.show, self.stored)
             self.joy.led(10)
 
@@ -131,7 +130,7 @@ class DmxHandler:
                 self.scene != self.last_scene)):
             log.debug('mode: scene run %s ' % self.scene)
             self.working = Scene(self.show, self.scene)
-            self.joy.led(1) 
+            self.joy.led(1)
 
         else:
             log.debug('mode: passthrough')
@@ -149,12 +148,12 @@ class DmxHandler:
 
         # read joystick mode changes
         if self.joy.refresh():
-            log.debug('joystick change %s' % self.joy.reading )
+            log.debug('joystick change %s' % self.joy.reading)
             self.read_joy_mode_changes()
 
         # joystick overrides console in Tech mode
         if (self.op == OP_TECH and
-            self.joy != MODE_PASSTHRU ):
+                self.joy != MODE_PASSTHRU):
             self.mode = self.joy_mode
 
         # handle logic changes,

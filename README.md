@@ -16,6 +16,8 @@ It works by taking 'input' on your normal DMX 'universe' via olad
 and sending the 'output' on a second DMX 'universe' where you put the 
 moving heads.  So the tool acts as a pass-through device during normal 
 operation .. and then handles H,V values specifically during "run" mode.
+The rest of the fixtures in that universe can remain on the originating 
+or be placed on the new one as connectivity warrants.
 
 I wrote this as I run lighting for a portable show, and so it allows the 
 dynamic configuration of a 'stage' for a location using the basic setup 
@@ -31,6 +33,7 @@ that point.  It then uses configuration, basic Euclidean geometry
 and vectors to determine how to align designated moving head fixtures
 to the specified point on the stage. 
 
+lighting
 
 # Requirements
 - A reasonable host to run as the passthrough, I am using a 

@@ -253,14 +253,23 @@ class Scene:
 
     def handle_movement(self, joy, dmx):
         ''' handle movement type input'''
-        if joy.dpadUp():
+        # Movement speed, left and right
+        if joy.dpadLeft():
             self.speed = clamp(self.speed + 5, 2, 100)
             log.debug(' speed: %d' % self.speed)
             time.sleep(0.2)
-        elif joy.dpadDown():
+        elif joy.dpadRight():
             self.speed = clamp(self.speed - 5, 2, 100)
             log.debug(' speed: %d' % self.speed)
             time.sleep(0.2)
+
+        # handle height, up and down
+        # TODO: need to predefine max height somewhere
+        if joy.dpadUp():
+            self.z = clamp(self.z + .5, 1, 20)
+        elif joy.dpadDown():
+            self.z = clamp(self.z - .5, 1, 20)
+
         # handle movement
         rx = joy.rightX(self.deadzone)
         ry = joy.rightY(self.deadzone)
