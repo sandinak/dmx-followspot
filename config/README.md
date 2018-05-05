@@ -16,7 +16,7 @@ Base configuration of the tool.
    - *universe* - the Universe ID we're taking input from as configured 
 in OLA
    - *id* - the base DMX id for control messages to dmxfs.  We use 3 channels.
-- *output - where we send DMX
+- *output* - where we send DMX 
    - *universe* - the output Universe ID (Cannot be same as input)
 
 #### Example
