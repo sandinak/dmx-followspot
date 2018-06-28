@@ -1,11 +1,11 @@
 # Theory
 
-* [Definitions](#Definitions) - monikers and their definitions
-* [Modes of Operation](#Modes) - the operational modes
-* [Control Commands](#ControlCommands) - commands sent from originating 
+* [Definitions](Usage.md#definitions) - monikers and their definitions
+* [Modes of Operation](Usage.md#modes) - the operational modes
+* [Control Commands](Usage.md#control-commands) - commands sent from originating 
 DMX Universe
-* [Scenes](#Scenes) - A starting location for a "Target" 
-* [Show](#Show) - how we define fixtures
+* [Scenes](Usage.md#scenes) - A starting location for a "Target" 
+* [Show](Usage.md#show) - how we define fixtures
 
 This software works by designating the stage as a space in 
 x,y,z coordinated planes with the origin at the farthest spot 
