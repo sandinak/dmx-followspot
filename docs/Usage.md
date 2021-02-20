@@ -1,4 +1,14 @@
 # Usage 
+
+* [Definitions](#definitions) - monikers and their definitions
+* [Modes of Operation](#modes) - the operational modes
+* [Control Commands](#control-commands) - commands sent from originating 
+DMX Universe
+* [Scenes](#scenes) - A starting location for a "Target" 
+* [Show](#show) - how we define fixtures
+* [Fixuture Groups](#fixture-groups)
+* [Aspect](#aspect)
+
 In normal operation the system will read the data on the input 
 Universe, and write the same data to the output Universe. The system 
 is controlled via 3 DMX channels on the primary DMX universe. It will 
@@ -57,7 +67,7 @@ for any movement of the joystick.  Right now you can use the d-pad to
 move the Z position up as needed, however one of the TODO I have is to 
 allow the stage to be more detailed with risers, platforms, etc.
 
-# Show
+## Show
 All the fixtures in a show are 
 Each head is assigned a few pieces of data so that the system can do 
 the math.  The x,y and z data must be consistent with type of 
@@ -71,12 +81,12 @@ measurement system used, but can be english, metric or anything else.
 - z - the vertical height of the fixture as it would be measured at 
 the origin (eg .. if you have a sloped stage you have to account for that) 
 
-# FixtureGroups
+## Fixture Groups
 An organizational structure allowing fixtures to be grouped in any way 
 you'd like.  A group can have any number of individual fixtures, and a 
 fixture can be in more than one group.  
 
-# Aspect 
+## Aspect 
 Fixtures have aspects which help the system determine 
 the installed orientation of the fixture so it can determine which 
 directions to move the head as requested.  The default aspect:
