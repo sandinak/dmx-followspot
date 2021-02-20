@@ -21,10 +21,10 @@ height
 ## Modes
 The system currently has two modes: Production and Tech.
 
- - *Production mode* - (Mode:0) the joystick operator can only react to scenes as 
- they are cue'd to the system from the DMX controller upstream. They
-cannot edit any scenes or stage layouts.  The intent for this is to 
-prevent inadvertant operation during a show.
+ - *Production mode* - (Mode:0) the joystick operator can only react to 
+ scenes as they are cue'd to the system from the DMX controller upstream.
+ They cannot edit any scenes or stage layouts.  The intent for this is 
+ to prevent inadvertent operation during a show.
 
  - *Tech mode* - (Mode: 1) the joystick operator can select Edit 
  mode for a Scene that's cue'd from the master DMX controller by 

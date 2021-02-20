@@ -44,7 +44,7 @@ class DFSConfig:
             print('missing %s, cannot run.' % path)
             sys.exit(1)
         with open(path, 'r') as stream:
-            self.config = yaml.load(stream)
+            self.config = yaml.load(stream, Loader=yaml.FullLoader)
 
         self.fixture_profiles = self.load_fixture_profiles()
 
@@ -67,13 +67,13 @@ class DFSConfig:
             log.info('reading %s' % f)
             with open(f, 'r') as stream:
                 try:
-                    fixtures = yaml.load(stream)
+                    fixtures = yaml.load(stream, Loader=yaml.FullLoader)
                 except (yaml.yamlError, yaml.MarkedYamlError) as e:
                     log.error(
                         'cannot read %s : YAML error: %s' % (
                             f,
                             str(e)))
-            for k, v in fixtures.iteritems():
+            for k, v in fixtures.items():
                 log.info('  loading fixture %s' % k)
                 all_fixtures[k] = v
         return all_fixtures

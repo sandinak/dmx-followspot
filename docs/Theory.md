@@ -1,12 +1,4 @@
 # Theory
-
-* [Definitions](#Definitions) - monikers and their definitions
-* [Modes of Operation](#Modes) - the operational modes
-* [Control Commands](#ControlCommands) - commands sent from originating 
-DMX Universe
-* [Scenes](#Scenes) - A starting location for a "Target" 
-* [Show](#Show) - how we define fixtures
-
 This software works by designating the stage as a space in 
 x,y,z coordinated planes with the origin at the farthest spot 
 Down Stage Right.  All Fixtures and Targets are referenced from 
@@ -35,3 +27,13 @@ SR |---------------------------------------------------------| SL
    ^                         DOWN STAGE                       
    Y 
 ```
+
+The software then uses the targeted position and the position of each
+fixture and computes the Vector for the Fixture pointing at Target.  
+Each Vector is then translated into horizontal and vertical (pan and tilt)
+values for the device.  This includes correcting for rotational direction
+of the fixture, and the horizontal and vertical ranges.
+
+To compute the angles, each light fixture must define the x-axis direction 
+for the horizontal value, and the z axis direction for the vertical value 
+of the Fixture.

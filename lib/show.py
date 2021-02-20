@@ -16,6 +16,7 @@
 # Copyright (C) 2018 Branson Matheson
 
 import logging as log
+from six.moves import reduce
 import numpy as np
 import vectors as v
 import math
@@ -88,8 +89,7 @@ class Show:
         self.fixture_groups['all'] = list(self.fixtures.keys())
 
         # create group names for an ordered list to iterate across.
-        self.fixture_group_names = sorted(
-            self.fixture_groups.iterkeys())
+        self.fixture_group_names = sorted( self.fixture_groups.keys())
 
         # backfill fixtures with config from profiles and aspects.
         for fname in self.fixtures:

@@ -56,7 +56,7 @@ class Stage:
             self.stage = self.stages[name]
             self.stage['fixtures'] = dict()
             #-- init fixtures
-            for k,v in show.fixtures.iteritems():
+            for k,v in show.fixtures.items():
                 self.stage['fixtures'][k] = v
 
         self.fixtures = self.stage['fixtures']
@@ -141,7 +141,7 @@ class Stage:
 class FixturePair(Stage):
     def __init__(self, fixtures):
         self.fixtures = fixtures
-        self.fixture_names = sorted(self.fixtures.iterkeys())
+        self.fixture_names = sorted(self.fixtures.keys())
 
         #  TODO: set flags on fixtures that need edits
         self.id = (len(self.fixture_names) * 100) + 1

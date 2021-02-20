@@ -1,0 +1,23 @@
+#! /bin/sh
+
+export GIT_NAME=$(basename $PWD)
+echo "Setting env for ansible in $GIT_NAME:"
+# setup VENV crap
+export PYCURL_SSL_LIBRARY=openssl
+
+# check for venv .. if not there.. look to see if we can make it
+if [ ! -d venv -a -f Makefile ]; then
+	echo "  - no venv .. found Makefile, running make"
+	make
+elif [ ! -d venv -a -f requirements.txt ]; then
+	echo "  - no venv .. found requirements attempting to create":
+	virtualenv venv
+	pip install --no-cache-dir -r requirements.txt
+fi
+
+# set prompt 
+export CONTEXT="($GIT_NAME)"
+export PS1="($GIT_NAME)${PS1}"
+
+. venv/bin/activate
+  
