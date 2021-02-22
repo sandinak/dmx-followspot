@@ -184,7 +184,8 @@ A profile file is structured like this:
     - *red*
     - *green*
     - *blue*
-  - *channels* - an ordered list of the channels matching the DMX channels for the fixture. 
+  - *channels* - an ordered list of the all DMX channels for the fixture. 
+
 - ...
 
 ### Channels

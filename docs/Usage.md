@@ -44,6 +44,7 @@ The system currently has two modes: Production and Tech.
 The system is activated simply using a DMX value on the Command DMX 
 channel.
 
+MODE:
  - 0 - Pass-through - all values sent to Universe 1 will be reflected
  to Universe 2 just as sent.  
  - 1 - Play - This will activate a Scene as defined by the id on the 

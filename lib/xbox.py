@@ -28,11 +28,15 @@ import signal
 import select
 import time
 import logging as log
+import sys
 
 xboxdrv_options = [
-    '--no-uinput',
-    '--detach-kernel-driver'
+#    '--no-uinput',
+#    '--detach-kernel-driver'
 ]
+
+XBOXDRV = '/usr/bin/xboxdrv'
+SUDO = '/usr/bin/sudo'
 
 
 class Joystick:
@@ -47,16 +51,44 @@ class Joystick:
         joy = xbox.Joystick()
     """
 
-    def __init__(self, wid=0, refreshRate=30):
+    def __init__(self, config={}, refreshRate=30, debug=False):
         self.refreshRate = refreshRate
-        self.wid = wid
+        self.debug = debug
+        self.cid = config.get('controller_id')
+        self.wid = config.get('wireless_id')
+        self.controller_check() 
         self.connect()
 
+    def controller_check(self):
+        ''' Make sure the controller is connected and ready '''
+        if not os.path.isfile(XBOXDRV) and os.access(XBOXDRV, os.X_OK):
+            print('%s not found, need to install' % XBOXDRV)
+            sys.exit(1)
+
+        c_list_result = subprocess.run([ XBOXDRV, '-L' ], capture_output=True) 
+        c_list_out = c_list_result.stdout.decode('utf-8')
+        if 'no controller detected' in c_list_out:
+            print('ERROR: no controller detected:\n%s' % c_list_out)
+            if not self.debug: 
+                sys.exit(1)
+
+
     def connect(self, options=[]):
-        run_options = ['xboxdrv']
-        if self.wid > 0:
+        run_options = [XBOXDRV]
+
+        # become root if needed
+        if os.geteuid():
+            run_options.insert(0, SUDO)
+
+        # type of controller, and target
+        print('controller: %d' % self.cid)
+        if self.cid and self.cid > 0:
+            run_options.append('--id')
+            run_options.append('%d' % self.cid)
+        if self.wid and self.wid > 0:
             run_options.append('--wid')
             run_options.append('%d' % self.wid)
+
         run_options = run_options + xboxdrv_options + options
         log.debug('running %s' % (" ".join(run_options)))
         self.proc = subprocess.Popen(
@@ -90,7 +122,7 @@ class Joystick:
                 if response[0:12].lower() == 'press ctrl-c':
                     found = True
                 # If we see 140 char line, we are seeing valid input
-                if len(response) == 140:
+                if 'now be available' in response or len(response) == 140:
                     found = True
                     self.connectStatus = True
                     self.reading = response

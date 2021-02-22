@@ -74,6 +74,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="DMX Followspot")
     # defaults
+    parser.set_defaults(debug=False)
     parser.set_defaults(verbose=False)
     parser.set_defaults(show_errors=False)
     parser.set_defaults(check_mode=False)
@@ -114,7 +115,10 @@ def main():
         sys.exit(1)
 
     # setup joystick
-    joy = xbox.Joystick()
+    joy = xbox.Joystick(
+        debug=args.debug,
+        config=config.joystick
+        )
 
     if args.check_mode:
         sys.exit(0)

@@ -24,16 +24,18 @@ import xbox
 import logging as log
 import time
 
-# Operations
-OP_PROD = 0x00
-OP_TECH = 0x01
+# Operation Channel dmx
+OP_PROD = 0x00  # cmd from console only, pointing only 
+OP_TECH = 0x01  # cmd from console or joystick
 
-# mode masks
+# Mode Channel dmx+1
 #-- normal operation .. no interference
-MODE_PASSTHRU = 0x00
+MODE_PASSTHRU = 0x00    # everything passes thru 
 MODE_SCENE_RUN = 0x01
 MODE_SCENE_EDIT = 0x02
 MODE_STAGE_EDIT = 0x03
+
+# Scene Channel dmx+2
 
 
 class DmxHandler:
@@ -116,21 +118,21 @@ class DmxHandler:
         if self.mode == MODE_STAGE_EDIT:
             log.debug('mode: stage edit %s ' % self.stage.name)
             self.working = Stage(self.stage, self.show, self.stored)
-            self.joy.led(10)
+            #self.joy.led(10)
 
         elif (self.mode == MODE_SCENE_EDIT or
               (self.mode == MODE_SCENE_EDIT and
                 self.scene != self.last_scene)):
             log.debug('mode: scene edit %s' % self.scene)
             self.working = Scene(self.show, self.scene)
-            self.joy.led(13)
+            #self.joy.led(13)
 
         elif (self.mode == MODE_SCENE_RUN or
               (self.mode == MODE_SCENE_RUN and
                 self.scene != self.last_scene)):
             log.debug('mode: scene run %s ' % self.scene)
             self.working = Scene(self.show, self.scene)
-            self.joy.led(1)
+            #self.joy.led(1)
 
         else:
             log.debug('mode: passthrough')
@@ -148,12 +150,12 @@ class DmxHandler:
 
         # read joystick mode changes
         if self.joy.refresh():
-            log.debug('joystick change %s' % self.joy.reading)
+            # log.debug('joystick change %s' % self.joy.reading)
             self.read_joy_mode_changes()
 
         # joystick overrides console in Tech mode
-        if (self.op == OP_TECH and
-                self.joy != MODE_PASSTHRU):
+        if (self.op == OP_TECH and self.joy_mode != MODE_PASSTHRU):
+            log.debug('joystick setting mode to %s' % self.joy_mode)
             self.mode = self.joy_mode
 
         # handle logic changes,
@@ -171,8 +173,8 @@ class DmxHandler:
         # handle operation based on mode.
         if self.mode & MODE_SCENE_RUN:
             self.dmx = self.working.run(self.joy, self.dmx)
-        elif (self.mode & MODE_STAGE_EDIT or
-              self.mode * MODE_SCENE_EDIT):
+
+        elif (self.mode & MODE_SCENE_EDIT):
             self.dmx = self.working.edit(self.joy, self.dmx)
 
         self.tx.SendDmx(self.output.universe, self.dmx, self._txDmx)

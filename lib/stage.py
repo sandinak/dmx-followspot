@@ -28,6 +28,8 @@ import logging as log
 from show import Fixture
 from show import FixtureGroup
 from show import Target
+import yaml
+
 
 
 STAGE_FILE = 'stages.yml'
@@ -45,7 +47,7 @@ class Stage:
             self.data['stages'] = dict()
         else: 
             with open(path, 'r') as stream:
-                self.data = yaml.load(stream)
+                self.data = yaml.load(stream, Loader=yaml.FullLoader)
 
         self.stages = self.data['stages']
 
@@ -55,14 +57,18 @@ class Stage:
             self.stages[name] = dict()
             self.stage = self.stages[name]
             self.stage['fixtures'] = dict()
+            self.name = name
             #-- init fixtures
             for k,v in show.fixtures.items():
                 self.stage['fixtures'][k] = v
+        else:
+            self.stage = self.stages[name]
 
         self.fixtures = self.stage['fixtures']
         self.show = show
         self.speed = 100
         self.all_lights = False
+
 
         # create objects to work with
         # TODO: add stored info here.

@@ -3,15 +3,17 @@ dmx:
   # where the input comes from
   # this is the DMX Spot Controller ID
   input: 
-    universe: 1
-    id: 20
+    universe: 0
+    id: 42
+  
 
   # where the spots are.. currently limited to 1 universe
   output:
-    universe: 2
+    universe: 1
 
 # how we manage the joystick
 joystick:
-  type: wireless
-  id: 1
-  deadzone: 4000 
+  controller_id: 1
+  #controller_id: 0
+  #wireless_id: 0
+  deadzone: 5000 

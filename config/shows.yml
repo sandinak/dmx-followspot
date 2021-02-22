@@ -1,73 +1,43 @@
 ---
 shows:
   default:
+    # this stage is in inches
+    # z is height of average person ..65 inches
+    stage:
+      x: 300
+      y: 230
+      z: 65
     fixtures:
-      F-SR-PS:
-        id: 257
-        profile: 36LED_PS
-        x: 0
-        y: 0
-        z: 0
-      # SR Board
-      F-SR-S:
-        id: 465
-        profile: Ralinto_Spot
-        x: 2
-        y: 0
-        z: 0
-      F-SR-1-P: 
-        id: 127
-        profile: LED_Wash
-        x: 2.3
-        y: 0
-        z: 0
-
-      F-SC-1-P:
-        id: 399
-        profile: LED_Wash
-        x: 3.333
-        y: 0 
-        z: 0
-      F-SC-2-P:
-        id: 408
-        profile: LED_Wash
-        x: 4.666
-        y: 0
-        z: 0
-      F-SC-S:
-        id: 185
+      Truss-3z:
+        id: 21
+        profile: ADJ_3z
+        aspect: truss
+        x: 157
+        y: 216
+        z: 71
+      Truss-LS-1:
+        id: 1
         profile: LED_Spot
-        x: 4
-        y: 0
-        z: 0
-
-      F-SL-1-P: 
-        id: 109
-        profile: LED_Wash
-        x: 2.3
-        y: 0
-        z: 0
-      F-SL-S:
-        id: 480
-        profile: Ralinto_Spot
-        x: 2
-        y: 0
-        z: 0
-
-      F-SL-PS:
-        id: 495
-        profile: 36LED_PS
-        x: 12 
-        y: 0
-        z: 0
-
+        aspect: truss
+        x: 135
+        y: 216
+        z: 77
+      Truss-LS-2:
+        id: 11
+        profile: LED_Spot
+        aspect: truss
+        x: 177
+        y: 216
+        z: 77
     fixture_groups:
-      F-PS:
-        - F-SR-PS
-        - F-SL-PS
+      test:
+        - Truss-3z
+#        - Truss-LS-1
+        - Truss-LS-2
+
 
     fixture_aspects:
       truss: hanging
       tree: hanging,reversed
 
-
+...

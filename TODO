@@ -1,0 +1,9 @@
+---
+- rotational offset - add/subtract a value based on the placement of the device 
+- multiple universe - in and out .. assuming ArtNET here. 
+- "control" light to know operation
+- stage height mapping for risers
+  - phase in the lift .. not jerk
+- stage editing
+- webgui ? 
+- focus 

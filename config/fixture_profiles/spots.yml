@@ -5,6 +5,7 @@ LED_Spot:
   v-range: 190
   hx: 45
   vz: 15
+  h-rotation: cw
   color_values:
     white: 0
     red: 15
@@ -20,6 +21,40 @@ LED_Spot:
    - strobe
    - color
    - gobo
+   - function
+
+ADJ_3z:
+  h-range: 540
+  v-range: 270
+  hx: 45
+  vz: 15
+  h-rotation: cw
+  color_values:
+    white: 0
+    red: 8
+    green: 29
+    blue: 36
+  channels:
+   - h-coarse
+   - h-fine
+   - v-coarse
+   - v-fine
+   - color
+   - gobo_static
+   - gobo_rotate
+   - gobo2_rotation
+   - prism
+   - prism_rotation
+   - shutter
+   - intensity
+   - intensity-fine
+   - focus
+   - auto_focus
+   - zoom
+   - shows
+   - show_speed
+   - dimmer_modes
+   - pan_tilt_speed
    - function
 
 Ralinto_Spot:

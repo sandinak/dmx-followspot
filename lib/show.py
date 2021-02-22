@@ -51,12 +51,16 @@ class Show:
             print('missing %s, cannot run.' % path)
             sys.exit(1)
         with open(path, 'r') as stream:
-            self.data = yaml.load(stream)
+            self.data = yaml.load(stream, Loader=yaml.FullLoader)
             
         if name not in self.data['shows']:
             log.error('no such show %s in %s' % ( name, path))
             sys.exit(1)
         self.show = self.data['shows'][name]
+        
+        # general stage definitions
+        # TODO: handle if not here
+        self.stage = self.show['stage']
 
         # setup control
         # TODO: other methods?
@@ -109,7 +113,7 @@ class Show:
             # check for aspect
             if 'aspect' in fixture:
                 aspect_name = fixture['aspect']
-                if aspect_name not in config.fixture_aspects:
+                if aspect_name not in self.fixture_aspects:
                     log.error('fixture %s configured in show %s '
                               ' with aspect %s but that is not defined.'
                               % (fname, self.name, aspect_name))
@@ -141,6 +145,9 @@ class Scene:
         self.scene_id = scene_id
         self.path = path
         self.deadzone = self.show.config.joystick['deadzone']
+        self.edit_mode = 0
+        # TODO allow scenes to have followspot mode
+        self.followspot_mode = 0
 
         # read scene if exists
         if not os.path.exists(path):
@@ -158,12 +165,18 @@ class Scene:
         # initialize scene if it doesn't exists
         if 'name' not in self.scene:
             self.scene['name'] = scene_id
-            self.scene['speed'] = 40
-            self.scene['x'] = 1
-            self.scene['y'] = 1
-            self.scene['z'] = 5
+            # set the speed high to start 
+            self.scene['speed'] = 400
+            # put things in middle of stage
+            self.scene['x'] = int(self.show.stage['x']/2)
+            self.scene['y'] = int(self.show.stage['y']/2)
+            self.scene['z'] = int(self.show.stage['z']/2)
+            # add the groups
             self.scene['fixture_group'] = (
                 self.show.fixture_group_names[0])
+            
+            # TODO: non-followspot mode
+            self.followspot_mode = 1
 
         # set up accessors
         self.name = self.scene['name']
@@ -182,6 +195,7 @@ class Scene:
             self.scene['x'],
             self.scene['y'],
             self.scene['z'])
+
         self.fixture_group.point_to(self.target)
 
     def save(self, path=SCENE_FILE):
@@ -224,6 +238,9 @@ class Scene:
         if joy.B():
             log.info('saving scene %d' % self.scene_id)
             self.save()
+        elif joy.Back():
+            log.info('reverting to sent DMX values.')
+
         elif joy.rightBumper():
             self.fixture_group.lights_off()
             # rotate forwards
@@ -254,12 +271,12 @@ class Scene:
     def handle_movement(self, joy, dmx):
         ''' handle movement type input'''
         # Movement speed, left and right
-        if joy.dpadLeft():
-            self.speed = clamp(self.speed + 5, 2, 100)
+        if joy.dpadUp():
+            self.speed = clamp(self.speed + 5, 2, 500)
             log.debug(' speed: %d' % self.speed)
             time.sleep(0.2)
-        elif joy.dpadRight():
-            self.speed = clamp(self.speed - 5, 2, 100)
+        elif joy.dpadDown():
+            self.speed = clamp(self.speed - 5, 2, 500)
             log.debug(' speed: %d' % self.speed)
             time.sleep(0.2)
 
@@ -289,7 +306,7 @@ class Scene:
             log.debug('all_on')
             time.sleep(0.2)
             return self.fixture_group.update_dmx(dmx)
-        elif self.all_lights == True and joy.rightTrigger():
+        elif self.all_lights == True and joy.leftTrigger():
             self.all_lights = False
             self.fixture_group.lights_off()
             log.debug('all_off')
@@ -462,13 +479,13 @@ class Fixture:
         self.v = (
             self.v_z_axis + ((va * 65535) / self.v_range)
         )
-        log.debug('%s s: %f,%f t: %f,%f ha: %f h0: %f va: %f v0: %f f: %f, %f' % (
-            self.name,
-            self.x, self.y,
-            target.x, target.y,
-            ha, self.h_x_axis / 255,
-            va, self.v_z_axis / 255,
-            self.h / 255, self.v / 255))
+        # log.debug('%s s: %f,%f t: %f,%f ha: %f h0: %f va: %f v0: %f f: %f, %f' % (
+        #     self.name,
+        #     self.x, self.y,
+        #     target.x, target.y,
+        #     ha, self.h_x_axis / 255,
+        #     va, self.v_z_axis / 255,
+        #     self.h / 255, self.v / 255))
         self.set_coordinates()
 
     def set_coordinates(self):
@@ -501,8 +518,8 @@ class Fixture:
             self.dmx['focus'] = clamp(self.dmx['focus'] + value, 0, 255)
 
     def update_coordinates(self, mod_h, mod_v):
-        #        if mod_h or mod_v:
-        #            log.debug('moving %s by %d, %d' % (self.name, mod_h, mod_v))
+        if mod_h or mod_v:
+            log.debug('moving %s by %d, %d' % (self.name, mod_h, mod_v))
         self.h = clamp(self.h + mod_h, 0, 65535)
         self.v = clamp(self.v + mod_v, 0, 65535)
         self.set_coordinates()
@@ -513,12 +530,15 @@ class Fixture:
 
     def off(self):
         for i in ['intensity',
+                  'intensity-fine',
+                  'shutter',
                   'color',
                   'red', 'green', 'blue', 'white']:
             if i in self.dmx:
                 self.dmx[i] = 0
 
     def on(self, color='white'):
+        # enable light
         if 'intensity' in self.dmx:
             self.dmx['intensity'] = 255
 

@@ -37,7 +37,7 @@ SR |---------------------------------------------------------| SL
    Y 
 ```
 
-The software then uses the targeted position and the position of each
+The software then uses the installed/configured position and the position of each
 fixture and computes the Vector for the Fixture pointing at Target.  
 Each Vector is then translated into horizontal and vertical (pan and tilt)
 values for the device.  This includes correcting for rotational direction

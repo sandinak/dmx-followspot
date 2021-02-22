@@ -1,0 +1,5 @@
+---
+stages:
+  home:
+    fixtures: 
+      F-SR-3z:
