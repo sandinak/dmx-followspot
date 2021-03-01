@@ -3,7 +3,6 @@ ola
 protobuf
 PyYAML
 six
-#git==1.14.0it+https://github.com/allelos/vectors.git
 git+https://github.com/allelos/vectors.git
 black
 pylint
