@@ -6,6 +6,8 @@ UNAME := $(shell uname | tr '[:upper:]' '[:lower:]')
 # 
 ACTIVATE_BIN := venv/bin/activate
 
+install: all 
+
 all: $(ACTIVATE_BIN) pip_requirements 
 
 clean:
