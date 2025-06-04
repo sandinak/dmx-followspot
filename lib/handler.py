@@ -37,7 +37,6 @@ MODE_STAGE_EDIT = 0x03
 
 # Scene Channel dmx+2
 
-
 class DmxHandler:
     def __init__(self, config, show, stage, joy):
         self.config = config
@@ -46,6 +45,7 @@ class DmxHandler:
         self.show = show
         self.stage = stage
         self.joy = joy
+        self.last_dmx = None
 
         # define base setup
         self.mode = OP_PROD
@@ -144,13 +144,16 @@ class DmxHandler:
         handler callback for DMX input
         '''
         self.dmx = dmx
+        if self.last_dmx is None or self.last_dmx != self.dmx:
+            # log.debug('dmx input %s' % pprint.pformat(self.dmx))
+            self.last_dmx = self.dmx
 
         # read DMX mode changes
         self.read_dmx()
 
         # read joystick mode changes
         if self.joy.refresh():
-            # log.debug('joystick change %s' % self.joy.reading)
+            log.debug('joystick change %s' % self.joy.reading)
             self.read_joy_mode_changes()
 
         # joystick overrides console in Tech mode

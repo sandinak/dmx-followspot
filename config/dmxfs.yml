@@ -13,7 +13,7 @@ dmx:
 
 # how we manage the joystick
 joystick:
-  controller_id: 1
-  #controller_id: 0
+  #controller_id: 1
+  controller_id: 0
   #wireless_id: 0
   deadzone: 5000 

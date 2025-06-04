@@ -65,7 +65,7 @@ class Joystick:
             print('%s not found, need to install' % XBOXDRV)
             sys.exit(1)
 
-        c_list_result = subprocess.run([ XBOXDRV, '-L' ], capture_output=True) 
+        c_list_result = subprocess.run([ SUDO, XBOXDRV, '-L' ], capture_output=True) 
         c_list_out = c_list_result.stdout.decode('utf-8')
         if 'no controller detected' in c_list_out:
             print('ERROR: no controller detected:\n%s' % c_list_out)
@@ -119,7 +119,6 @@ class Joystick:
                 if response[0:7] == 'No Xbox':
                     raise IOError('No Xbox controller/receiver found')
                 # Success if we see the following
-                if response[0:12].lower() == 'press ctrl-c':
                     found = True
                 # If we see 140 char line, we are seeing valid input
                 if 'now be available' in response or len(response) == 140:
@@ -157,6 +156,7 @@ class Joystick:
                 # last one.
                 while readable:
                     response = self.pipe.readline()
+                    # print(f'response: %s' % response)
                     # A zero length response means controller has been
                     # unplugged.
                     if len(response) == 0:

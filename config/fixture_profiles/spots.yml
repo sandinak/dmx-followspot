@@ -16,12 +16,13 @@ LED_Spot:
    - h-fine
    - v-coarse
    - v-fine
-   - movement_speed
-   - intensity
+   - color wheel
+   - gobo 
    - strobe
-   - color
-   - gobo
-   - function
+   - intensity
+   - none
+   - auto
+   - reset
 
 ADJ_3z:
   h-range: 540

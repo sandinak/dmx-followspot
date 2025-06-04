@@ -2,4 +2,5 @@
 stages:
   home:
     fixtures: 
-      F-SR-3z:
+      Truss-3z:
+      Truss-LS-2:
