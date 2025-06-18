@@ -15,25 +15,25 @@ shows:
         x: 157
         y: 216
         z: 71
-      Truss-LS-1:
+      Truss-LS-5:
         id: 1
-        profile: LED_Spot
+        profile: LED_Spot_Uking
         aspect: truss
         x: 135
         y: 216
         z: 77
-      Truss-LS-2:
-        id: 11
-        profile: LED_Spot
+      Truss-LS-1:
+        id: 12
+        profile: LED_Spot_Mini
         aspect: truss
         x: 177
         y: 216
         z: 77
     fixture_groups:
       test:
-        - Truss-3z
-#        - Truss-LS-1
-        - Truss-LS-2
+#        - Truss-3z
+        - Truss-LS-1
+        - Truss-LS-5
 
 
     fixture_aspects:

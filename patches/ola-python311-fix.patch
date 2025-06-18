@@ -1,0 +1,28 @@
+--- a/venv/lib/python3.11/site-packages/ola/OlaClient.py
++++ b/venv/lib/python3.11/site-packages/ola/OlaClient.py
+@@ -1092,7 +1092,11 @@ class OlaClient(object):
+ 
+     if request.universe in self._universe_callbacks:
+       data = array.array('B')
+-      data.fromstring(request.data)
++      # Fix for Python 3.9+ compatibility: fromstring() was deprecated
++      if hasattr(data, 'frombytes'):
++        data.frombytes(request.data)
++      else:
++        data.fromstring(request.data)
+       self._universe_callbacks[request.universe](data)
+     response = Ola_pb2.Ack()
+     callback(response)
+@@ -1397,7 +1401,11 @@ class OlaClient(object):
+ 
+     if status.Succeeded():
+       data = array.array('B')
+-      data.fromstring(response.data)
++      # Fix for Python 3.9+ compatibility: fromstring() was deprecated
++      if hasattr(data, 'frombytes'):
++        data.frombytes(response.data)
++      else:
++        data.fromstring(response.data)
+       universe = response.universe
+ 
+     callback(status, universe, data)

@@ -6,4 +6,5 @@ six
 git+https://github.com/allelos/vectors.git
 black
 pylint
+vectors
 #xbox360controller

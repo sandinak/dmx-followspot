@@ -106,7 +106,7 @@ class Show:
                           'which is missing profile "%s".' %
                           (fname, self.name, profile))
                 sys.exit(1)
-            fixture['profile'] = config.fixture_profiles[profile]
+            fixture['profile'] = self.config.fixture_profiles[profile]
 
             fixture['inverted'] = False
             fixture['reversed'] = False

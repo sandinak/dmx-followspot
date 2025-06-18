@@ -19,33 +19,64 @@
 from __future__ import print_function
 
 import argparse
-import array
 import atexit
-import io
 import os
-import pprint
 import signal
 import sys
-import textwrap
+import logging as log
 
 from ola.ClientWrapper import ClientWrapper
-import yaml
 
-sys.path.append('lib')
-from config import DFSConfig
-from handler import DmxHandler
-import logging as log
-from show import Show
-from stage import Stage
-import xbox
+# Add the project root to Python path for lib imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from lib.config import DFSConfig
+from lib.handler import DmxHandler
+from lib.show import Show
+from lib.stage import Stage
+from lib import xbox
 
 
 __author__ = 'branson@sandsite.org'
+
+# Global variables for graceful shutdown
+wrapper = None
+joy = None
+shutdown_requested = False
 
 
 def killall():
     ''' cleanup subprocesses .. needed for joystick'''
     os.killpg(os.getpgrp(), signal.SIGHUP)
+
+
+def signal_handler(signum, frame):
+    ''' Handle termination signals gracefully '''
+    global shutdown_requested, wrapper, joy
+
+    log.info(f'Received signal {signum}, initiating graceful shutdown...')
+    shutdown_requested = True
+
+    # Stop the OLA wrapper if it's running
+    if wrapper:
+        try:
+            wrapper.Stop()
+            log.info('OLA wrapper stopped')
+        except Exception as e:
+            log.error(f'Error stopping OLA wrapper: {e}')
+
+    # Close joystick connection
+    if joy:
+        try:
+            joy.close()
+            log.info('Joystick connection closed')
+        except Exception as e:
+            log.warning(f'Error closing joystick (non-critical): {e}')
+
+    # Final cleanup
+    killall()
+    log.info('Graceful shutdown complete')
+    sys.exit(0)
 
 
 def setup_logging(args):
@@ -96,9 +127,17 @@ def parse_args():
 
 
 def main():
+    global wrapper, joy, shutdown_requested
+
+    # Register signal handlers for graceful shutdown
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
     atexit.register(killall)
+
     args = parse_args()
     setup_logging(args)
+    log.info('DMX Followspot starting up...')
+
     # read tool config
     config = DFSConfig()
 
@@ -133,7 +172,16 @@ def main():
         config.input.universe,
         rx.REGISTER,
         handler.handle)
-    wrapper.Run()
+
+    log.info('DMX Followspot ready, starting main loop...')
+    try:
+        wrapper.Run()
+    except KeyboardInterrupt:
+        log.info('Keyboard interrupt received')
+        signal_handler(signal.SIGINT, None)
+    except Exception as e:
+        log.error(f'Unexpected error in main loop: {e}')
+        signal_handler(signal.SIGTERM, None)
 
 
 if __name__ == "__main__":

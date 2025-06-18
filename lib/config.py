@@ -17,9 +17,9 @@
 # Copyright (C) 2018 Branson Matheson
 
 import os
+import sys
 import yaml
 import glob
-import pprint
 import logging as log
 CONFIG_FILE = 'dmxfs.yml'
 

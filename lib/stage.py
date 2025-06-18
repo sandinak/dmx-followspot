@@ -16,19 +16,12 @@
 # dmx_followspot.py
 # Copyright (C) 2018 Branson Matheson
 
-import copy
-import math
 import os
 import time
-import sys
-
-import numpy
-
 import logging as log
-from show import Fixture
-from show import FixtureGroup
-from show import Target
 import yaml
+
+from .show import Fixture
 
 
 
@@ -123,13 +116,15 @@ class Stage:
         # handle light
         if self.all_lights == False and joy.rightTrigger():
             self.all_lights = True
-            self.fixtures[fixture].on()
+            for fixture in self.fixtures:
+                self.fixtures[fixture].on()
             log.debug('all_on')
             time.sleep(0.2)
 
         elif self.all_lights == True and joy.rightTrigger():
             self.all_lights = False
-            self.fixtures[fixture].off()
+            for fixture in self.fixtures:
+                self.fixtures[fixture].off()
             log.debug('all_off')
             time.sleep(0.2)
 

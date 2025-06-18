@@ -16,13 +16,12 @@
 # dmx_followspot.py
 # Copyright (C) 2018 Branson Matheson
 
-import sys
-import pprint
-from ola.ClientWrapper import ClientWrapper
-from show import Scene
-import xbox
 import logging as log
 import time
+
+from ola.ClientWrapper import ClientWrapper
+from .show import Scene
+from .stage import Stage
 
 # Operation Channel dmx
 OP_PROD = 0x00  # cmd from console only, pointing only 
@@ -62,7 +61,7 @@ class DmxHandler:
         wrapper = ClientWrapper()
         self.tx = wrapper.Client()
 
-    def _txDmx(status):
+    def _txDmx(self, status):
         ''' handle DMX send issues '''
         if status.Succeeded():
             log.debug('Success!')
@@ -70,7 +69,7 @@ class DmxHandler:
             log.error('Error: %s' % status.message)
 
         # TODO -- need this?
-        if self.wrapper:
+        if hasattr(self, 'wrapper') and self.wrapper:
             self.wrapper.Stop()
 
     def read_dmx(self):

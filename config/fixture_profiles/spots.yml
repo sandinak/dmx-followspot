@@ -1,6 +1,5 @@
 ---
-
-LED_Spot:
+LED_Spot_Uking:
   h-range: 540
   v-range: 190
   hx: 45
@@ -24,6 +23,29 @@ LED_Spot:
    - auto
    - reset
 
+LED_Spot_Mini:
+  h-range: 540
+  v-range: 190
+  hx: 45
+  vz: 15
+  h-rotation: cw
+  color_values:
+    white: 0
+    red: 15
+    green: 25
+    blue: 35
+  channels:
+   - h-coarse
+   - h-fine
+   - v-coarse
+   - v-fine
+   - color wheel
+   - gobo 
+   - strobe
+   - intensity
+   - none
+   - auto
+   - reset
 ADJ_3z:
   h-range: 540
   v-range: 270

@@ -329,4 +329,17 @@ class Joystick:
 
     # Cleanup by ending the xboxdrv subprocess
     def close(self):
-        os.system('pkill xboxdrv')
+        try:
+            # Try to terminate our specific subprocess first
+            if hasattr(self, 'proc') and self.proc:
+                self.proc.terminate()
+                self.proc.wait(timeout=2)
+                log.debug('Xbox controller subprocess terminated')
+        except Exception as e:
+            log.debug(f'Error terminating xbox subprocess: {e}')
+
+        # Fallback to pkill (may fail with permission error, but that's ok)
+        try:
+            os.system('pkill xboxdrv')
+        except Exception as e:
+            log.debug(f'pkill xboxdrv failed (non-critical): {e}')
